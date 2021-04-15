@@ -72,10 +72,13 @@ month<-data.all$month
   ## Is there a difference in fluorescence of default fluorescence signatures
   ## vs lab calibrated fluorescence vs field samples?
 set.seed(123)
+  ## mds of samples, default ref, cyano cultures
 mds.data<-metaMDS(data.norm[, c(1:5)], distance = "bray", k = 3, 
                   maxit = 999, trace =2)
-mds.subset<-metaMDS(data.subset[, c(1:5)], distance = "bray", k = 2,
+  ## mds of samples and default ref
+mds.subset<-metaMDS(data.subset[, c(1:5)], distance = "bray", k = 3,
                     maxit = 999, trace =2)
+  ## mds of deconvolution F (check F) of samples and default ref
 mds.subset2<-metaMDS(data.subset2[, c(1:5)], distance = "bray", k = 3,
                     maxit = 999, trace =2)
 stressplot(mds.subset)
@@ -358,20 +361,6 @@ test<- test.trans %>% mutate(order = rownames(test.trans))
 
 
 ############################################################################################
-  ## ----------- Historgram of Fit Error -----------------
-
-hist.1<-ggplot() +
-  geom_histogram(data = mds.2020, aes(x=grp.fit), bins = 15) +
-  labs(x = "Fit Error") +
-  coord_equal() +
-  #scale_color_viridis_d(option = "plasma") + 
-  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
-        panel.background = element_blank(),text = element_text(size = 14),
-        axis.line = element_line(colour = "black"),
-        axis.text=element_text(size=14), axis.title = element_text(size = 14),
-        legend.text = element_text(size = 14), legend.key=element_rect(fill='white'),
-        legend.position = "right",
-        legend.title = element_blank())
-hist.1
+  ###############   TESTING FOR SIG DIFF BTWN GROUPS   ################
 
 
