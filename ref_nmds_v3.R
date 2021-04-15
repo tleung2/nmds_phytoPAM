@@ -80,6 +80,8 @@ mds.subset2<-metaMDS(data.subset2[, c(1:5)], distance = "bray", k = 3,
                     maxit = 999, trace =2)
 stressplot(mds.subset)
 mds.data
+mds.subset
+mds.subset2
 
   ## 3) Plot nMDS output using base R
 plot(mds.subset2)  ## Base R will automatically recognize ordination
