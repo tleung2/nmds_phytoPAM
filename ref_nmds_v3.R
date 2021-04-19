@@ -22,7 +22,7 @@ data.all$fit_error=as.numeric(data.all$fit_error)
   ## First subset samples then scale from 0 to 1
   ## ignore this line: data.samples<-subset(data.all, source %in% c('2018','2019'))
 data.norm <- as.data.frame(t(apply(data.all[2:6], 1, 
-                                   (function(x) round((x/(max(x))),3)))))
+                                   (function(x) round((x/(max(x)))*1000,3)))))
 
   ## Normalize checked columns
 check.norm <- as.data.frame(t(apply(data.all[13:17], 1, 
@@ -31,7 +31,7 @@ check.norm <- as.data.frame(t(apply(data.all[13:17], 1,
 data.norm2<-bind_cols(data.norm,data.all[1])
 data.norm3<-bind_cols(data.norm2,data.all[8])
 data.norm4<-bind_cols(data.norm3,data.all[9])
-data.norm4<-bind_cols(data.norm3,data.all[10])
+data.norm4<-bind_cols(data.norm3,data.all[c(10,13)])
 
 check.norm2<-bind_cols(check.norm,data.all[1])
 check.norm3<-bind_cols(check.norm2,data.all[8])
@@ -74,7 +74,7 @@ grp.fit<-data.subset$fit_error
 grp.source<-data.subset$source
 sampleID<-data.subset$sample
 location<-as.character(data.subset$site)
-#week<-data.all$week
+class<-factor(data.subset$fit_class, levels = c("0","1","> 1"))
 #month<-data.all$month
 
   ## 2) start mds: 
@@ -121,6 +121,7 @@ mds.scores3$grp.fit<-grp.fit
 mds.scores3$grp.source<-grp.source
 mds.scores3$sample<-sampleID
 mds.scores3$location<-location
+mds.scores3$class<-class
 #mds.scores$week<-as.factor(week)
 #mds.scores$month<-month
   
@@ -217,12 +218,12 @@ p3<-ggplot() +
                fill = "gray", alpha =0.3, linetype = 2) +
   geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size =9) +
   #geom_point(data = mds.2020, aes(x=NMDS1, y=NMDS2), size = 6, color = "#0000CC") +
-  geom_point(data = mds.scores3, aes(x=NMDS1, y=NMDS2), color = "#73D055FF", size = 6) +
+  geom_point(data = fit4, aes(x=NMDS1, y=NMDS2), color = "#73D055FF", size = 6) +
   #geom_point(data = mds.scores3, aes(x=NMDS1, y=NMDS2, color = grp.fit), size = 6) +
   #geom_point(data = mds.2019, aes(x=NMDS1, y=NMDS2), size = 6, color = "#FF9900") +
   #geom_text(data = mds.2020, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  geom_text(data = mds.scores3, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
+  #geom_text(data = mds.scores3, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0.1, nudge_x = 0.15) +
   #scale_colour_viridis_c(option = "plasma") + 
   theme(panel.grid.major = element_blank(),
@@ -237,7 +238,7 @@ p3<-ggplot() +
         legend.position = "right",
         legend.title = element_blank())
 p3
-p4<- p3 + facet_wrap(.~location, ncol = 3)
+p4<- p3 + facet_wrap(.~class, ncol = 1)
 p4
 
   ## Subset and plot green valley 
