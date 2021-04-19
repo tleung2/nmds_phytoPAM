@@ -22,7 +22,7 @@ data.all$fit_error=as.numeric(data.all$fit_error)
   ## First subset samples then scale from 0 to 1
   ## ignore this line: data.samples<-subset(data.all, source %in% c('2018','2019'))
 data.norm <- as.data.frame(t(apply(data.all[2:6], 1, 
-                                   (function(x) round((x/(max(x)))*1000,3)))))
+                                   (function(x) round((x/(max(x))),3)))))
 
   ## Normalize checked columns
 check.norm <- as.data.frame(t(apply(data.all[13:17], 1, 
@@ -85,7 +85,7 @@ set.seed(123)
 mds.data<-metaMDS(data.norm[, c(1:5)], distance = "bray", k = 3, 
                   maxit = 999, trace =2)
   ## mds of samples and default ref
-mds.subset3<-metaMDS(data.subset[, c(1:5)], distance = "bray", k = 3,
+mds.subset4<-metaMDS(data.subset[, c(1:5)], distance = "bray", k = 3,
                     maxit = 999, trace =2)
   ## mds of deconvolution F (check F) of samples and default ref
 mds.subset2<-metaMDS(data.subset2[, c(1:5)], distance = "bray", k = 3,
@@ -102,7 +102,7 @@ mds.subset2
 save(mds.subset2, file = "mds_subset2.rda")
 
   ## 3) Plot nMDS output using base R
-plot(mds.subset3)  ## Base R will automatically recognize ordination
+plot(mds.subset4)  ## Base R will automatically recognize ordination
 rm(mds.subset)
 
 ########################################################################
@@ -152,9 +152,16 @@ grp.mix<-mds.scores[mds.scores$grp.source == "mixed",][chull(mds.scores[mds.scor
 hull.data<-rbind(grp.default,grp.cust)
 hull.data
   
+  ## Renaming default references
+mds.scores3$sample[which(mds.scores3$sample == "'syleo")] <- "Synechococcus leopoliensis."
+mds.scores3$sample[which(mds.scores3$sample == "chlorella")] <- "Chorella vulgaris"
+mds.scores3$sample[which(mds.scores3$sample == "phaeo")] <- "Phaeodactylum tricornutum"
+mds.scores3$sample[which(mds.scores3$sample == "crypto")] <- "Cryptomonas ovata"
+
 ########################################################################
   ###################  Plot nMDS using ggplot  #####################
 
+  ## -------------- Plot nMDS of references only  -----------------
   ## hulling only default refs, alpha = transparency w/ 0 being transparent
 p1<-ggplot() +
   geom_polygon(data = grp.default, aes(x = NMDS1, y = NMDS2, group = grp.source), fill = NA, alpha = 0.5) +
@@ -173,7 +180,7 @@ p1<-ggplot() +
         legend.title = element_blank())
 p1
 
-  ##subset of non-default 
+  ## subset of non-default 
 cust.scores<-subset(mds.scores, grp.source == "non-Default")
   ## Begin plot using ggplot--hulling only non-default refs, but there is error in the chull
   ## chull for non-default is only hulling 7 species and not all of them.
@@ -191,11 +198,18 @@ p2<-ggplot() +
         legend.title = element_blank())
 p2
 
- ## Plot references and 2018 samples
+ ## --------------- Plot references and samples  -------------------
  ## Subset 2018 data from the mds output
 mds.2019<-subset(mds.scores, grp.source == "2019")
 mds.2020<-subset(mds.scores, grp.source == "2020")
 mds.2018<-subset(mds.scores, grp.source == "2018")
+
+  ## subset by fit error
+fit0<-subset(mds.scores3, grp.fit == "0")
+fit1<-subset(mds.scores3, grp.fit == 1)
+fit2<- subset(mds.scores3, grp.fit == 2)
+fit3<-subset(mds.scores3, grp.fit == 3)
+fit4<-subset(mds.scores3, grp.fit > 3)
 
 p3<-ggplot() +
   geom_polygon(data = grp.default3, 
@@ -203,13 +217,13 @@ p3<-ggplot() +
                fill = "gray", alpha =0.3, linetype = 2) +
   geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size =9) +
   #geom_point(data = mds.2020, aes(x=NMDS1, y=NMDS2), size = 6, color = "#0000CC") +
-  geom_point(data = mds.scores3, aes(x=NMDS1, y=NMDS2), size = 6, color = "#009933") +
+  geom_point(data = fit4, aes(x=NMDS1, y=NMDS2), color = "#73D055FF", size = 6) +
   #geom_point(data = mds.2019, aes(x=NMDS1, y=NMDS2), size = 6, color = "#FF9900") +
   #geom_text(data = mds.2020, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  geom_text(data = mds.scores3, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.01) +
-  #scale_color_viridis_d(option = "plasma") + 
+  geom_text(data = fit4, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
+  geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0.1, nudge_x = 0.15) +
+  #scale_colour_viridis_c(option = "plasma") + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
@@ -226,14 +240,14 @@ p4<- p3 + facet_wrap(.~location, ncol = 3)
 p4
 
   ## Subset and plot green valley 
-mds.gval<-subset(mds.scores, location == "Green Valley")
-mds.twin<-subset(mds.scores, location == "North Twin East" | location == "North Twin West")
+mds.gval<-subset(mds.scores3, location == "Green Valley")
+mds.twin<-subset(mds.scores3, location == "North Twin East" | location == "North Twin West")
 p5<-ggplot() +
-  geom_polygon(data = grp.default, aes(x = NMDS1, y = NMDS2, group = grp.source), fill = c("gray"), alpha = 0.5) +
-  geom_point(data = grp.default, aes(x=NMDS1, y=NMDS2), color = "black", size =7) +
-  geom_point(data = mds.twin, aes(x=NMDS1, y=NMDS2, color = grp.fit), size = 7) +
-  geom_text(data = mds.twin, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  geom_text(data = grp.default, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.01) +
+  geom_polygon(data = grp.default3, aes(x = NMDS1, y = NMDS2, group = grp.source), fill = c("gray"), alpha = 0.5) +
+  geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), color = "black", size =7) +
+  geom_point(data = mds.gval, aes(x=NMDS1, y=NMDS2, color = grp.fit), size = 7) +
+  geom_text(data = mds.gval, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
+  geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.01) +
   #scale_color_viridis_d(option = "plasma", direction = -1, breaks = c("May", "June", "July", "August")) + 
   scale_color_viridis(option = "plasma", direction = -1) + 
   theme(panel.grid.major = element_blank(),
