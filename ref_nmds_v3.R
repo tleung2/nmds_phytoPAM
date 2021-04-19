@@ -22,7 +22,7 @@ data.all$fit_error=as.numeric(data.all$fit_error)
   ## First subset samples then scale from 0 to 1
   ## ignore this line: data.samples<-subset(data.all, source %in% c('2018','2019'))
 data.norm <- as.data.frame(t(apply(data.all[2:6], 1, 
-                                   (function(x) round((x/(max(x))),3)))))
+                                   (function(x) round((x/(max(x)))*1000,3)))))
 
   ## Normalize checked columns
 check.norm <- as.data.frame(t(apply(data.all[13:17], 1, 
@@ -31,16 +31,25 @@ check.norm <- as.data.frame(t(apply(data.all[13:17], 1,
 data.norm2<-bind_cols(data.norm,data.all[1])
 data.norm3<-bind_cols(data.norm2,data.all[8])
 data.norm4<-bind_cols(data.norm3,data.all[9])
+data.norm4<-bind_cols(data.norm3,data.all[10])
 
 check.norm2<-bind_cols(check.norm,data.all[1])
 check.norm3<-bind_cols(check.norm2,data.all[8])
 check.norm4<-bind_cols(check.norm3,data.all[9])
 
+
+  ## Remove samples with Fit error = 32000 (user error)
+data.norm4 <- data.norm4 %>%
+  filter(fit_error !='32000')
+
+check.norm4 <- check.norm4 %>%
+  filter(fit_error !='32000')
+
   ## Subset 2019-2020 datapoints
 data.subset<-subset(data.norm4, source == "2019" | source == "2020" | source == "Default" | source == "2018")
 data.subset2<-subset(check.norm4, source == "2019" | source == "2020" | source == "2018" | source == "Default")
 
-
+  ## Remove 
 #######################################################################
   ##########################  HISTOGRAMS  #########################
 
@@ -64,9 +73,9 @@ hist.1
 grp.fit<-data.subset$fit_error
 grp.source<-data.subset$source
 sampleID<-data.subset$sample
-location<-as.character(data.all$site)
-week<-data.all$week
-month<-data.all$month
+location<-as.character(data.subset$site)
+#week<-data.all$week
+#month<-data.all$month
 
   ## 2) start mds: 
   ## Is there a difference in fluorescence of default fluorescence signatures
@@ -77,7 +86,7 @@ mds.data<-metaMDS(data.norm[, c(1:5)], distance = "bray", k = 3,
                   maxit = 999, trace =2)
   ## mds of samples and default ref
 mds.subset<-metaMDS(data.subset[, c(1:5)], distance = "bray", k = 3,
-                    maxit = 999, trace =2)
+                    maxit = 999, trace =2, trymax = 999)
   ## mds of deconvolution F (check F) of samples and default ref
 mds.subset2<-metaMDS(data.subset2[, c(1:5)], distance = "bray", k = 3,
                     maxit = 999, trace =2)
@@ -87,7 +96,7 @@ mds.subset
 mds.subset2
 
   ## 3) Plot nMDS output using base R
-plot(mds.subset2)  ## Base R will automatically recognize ordination
+plot(mds.subset)  ## Base R will automatically recognize ordination
 rm(mds.subset)
 
 ########################################################################
@@ -95,10 +104,10 @@ rm(mds.subset)
   
   ## 1) Extract nMDS output into a dataframe 
   ## Use the score () to extraxt site scores and convert to data frame
-mds.scores<-as.data.frame(scores(mds.data))
+mds.scores<-as.data.frame(scores(mds.subset))
 
   ## 2) create solumn of site names from row names of meta.scores
-mds.scores$site<-rownames(mds.scores)
+mds.scores$site<-rownames(mds.subset)
 
   ## 3) add details to mds.scores dataframe
 grp.fit<-round(grp.fit, digits = 0)  ## Round Fit error to 1 decimal place
@@ -106,8 +115,8 @@ mds.scores$grp.fit<-grp.fit
 mds.scores$grp.source<-grp.source
 mds.scores$sample<-sampleID
 mds.scores$location<-location
-mds.scores$week<-as.factor(week)
-mds.scores$month<-month
+#mds.scores$week<-as.factor(week)
+#mds.scores$month<-month
   
  ##look at the data
 head(mds.scores)
@@ -140,16 +149,19 @@ hull.data
   ## 7) Plot nMDS using ggplot
   ## hulling only default refs, alpha = transparency w/ 0 being transparent
 p1<-ggplot() +
-  geom_polygon(data = grp.default, aes(x = NMDS1, y = NMDS2, group = grp.source), fill = c("gray"), alpha = 0.5) +
+  geom_polygon(data = grp.default, aes(x = NMDS1, y = NMDS2, group = grp.source), fill = NA, alpha = 0.5) +
   geom_point(data = grp.default, aes(x=NMDS1, y=NMDS2, color = grp.source), size = 5) +
   geom_text(data = grp.default, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, nudge_x = 0.1) +
-  coord_equal() +
   scale_color_viridis_d() +
-  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
-        panel.background = element_blank(),text = element_text(size = 18),
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        text = element_text(size = 18),
         axis.line = element_line(colour = "black"),
-        axis.text=element_text(size=18), axis.title = element_text(size = 18),
-        legend.text = element_text(size = 18), legend.key=element_rect(fill='white'),
+        axis.text=element_text(size=18), 
+        axis.title = element_text(size = 18),
+        legend.text = element_text(size = 18), 
+        legend.key=element_rect(fill='white'),
         legend.title = element_blank())
 p1
 
@@ -178,22 +190,27 @@ mds.2020<-subset(mds.scores, grp.source == "2020")
 mds.2018<-subset(mds.scores, grp.source == "2018")
 
 p3<-ggplot() +
-  geom_polygon(data = grp.default, aes(x = NMDS1, y = NMDS2, group = grp.source), fill = c("gray"), alpha = 0.5) +
+  geom_polygon(data = grp.default, 
+               aes(x = NMDS1, y = NMDS2, group = grp.source), 
+               fill = "gray", alpha =0.3, linetype = 2) +
   geom_point(data = grp.default, aes(x=NMDS1, y=NMDS2), size =9) +
   #geom_point(data = mds.2020, aes(x=NMDS1, y=NMDS2), size = 6, color = "#0000CC") +
-  geom_point(data = mds.2018, aes(x=NMDS1, y=NMDS2), size = 6, color = "#009933") +
+  geom_point(data = mds.scores, aes(x=NMDS1, y=NMDS2), size = 6, color = "#009933") +
   #geom_point(data = mds.2019, aes(x=NMDS1, y=NMDS2), size = 6, color = "#FF9900") +
   #geom_text(data = mds.2020, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  #geom_text(data = mds.2019, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
+  #geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
+  geom_text(data = mds.scores, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   geom_text(data = grp.default, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.01) +
-  coord_equal() +
   #scale_color_viridis_d(option = "plasma") + 
-  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
-        panel.background = element_blank(),text = element_text(size = 14),
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        text = element_text(size = 14),
         axis.line = element_line(colour = "black"),
-        axis.text=element_text(size=14), axis.title = element_text(size = 14),
-        legend.text = element_text(size = 14), legend.key=element_rect(fill='white'),
+        axis.text=element_text(size=14), 
+        axis.title = element_text(size = 14),
+        legend.text = element_text(size = 14), 
+        legend.key=element_rect(fill='white'),
         legend.position = "right",
         legend.title = element_blank())
 p3
