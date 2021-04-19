@@ -85,8 +85,8 @@ set.seed(123)
 mds.data<-metaMDS(data.norm[, c(1:5)], distance = "bray", k = 3, 
                   maxit = 999, trace =2)
   ## mds of samples and default ref
-mds.subset<-metaMDS(data.subset[, c(1:5)], distance = "bray", k = 3,
-                    maxit = 999, trace =2, trymax = 999)
+mds.subset3<-metaMDS(data.subset[, c(1:5)], distance = "bray", k = 3,
+                    maxit = 999, trace =2)
   ## mds of deconvolution F (check F) of samples and default ref
 mds.subset2<-metaMDS(data.subset2[, c(1:5)], distance = "bray", k = 3,
                     maxit = 999, trace =2)
@@ -95,26 +95,32 @@ mds.data
 mds.subset
 mds.subset2
 
+  ### note:mds1=no convergence, n=454
+  ### mds2 = solution eached
+
+  ## Saving nMDS output
+save(mds.subset2, file = "mds_subset2.rda")
+
   ## 3) Plot nMDS output using base R
-plot(mds.subset)  ## Base R will automatically recognize ordination
+plot(mds.subset3)  ## Base R will automatically recognize ordination
 rm(mds.subset)
 
 ########################################################################
-  ####################  PLOT nMDS USING GGPLOT  ####################
+  #################  PREPARING OUTPUT FOR GGPLOT  ##################
   
   ## 1) Extract nMDS output into a dataframe 
   ## Use the score () to extraxt site scores and convert to data frame
-mds.scores<-as.data.frame(scores(mds.subset))
+mds.scores3<-as.data.frame(scores(mds.subset3))
 
   ## 2) create solumn of site names from row names of meta.scores
-mds.scores$site<-rownames(mds.subset)
+mds.scores3$site<-rownames(mds.subset3)
 
   ## 3) add details to mds.scores dataframe
 grp.fit<-round(grp.fit, digits = 0)  ## Round Fit error to 1 decimal place
-mds.scores$grp.fit<-grp.fit
-mds.scores$grp.source<-grp.source
-mds.scores$sample<-sampleID
-mds.scores$location<-location
+mds.scores3$grp.fit<-grp.fit
+mds.scores3$grp.source<-grp.source
+mds.scores3$sample<-sampleID
+mds.scores3$location<-location
 #mds.scores$week<-as.factor(week)
 #mds.scores$month<-month
   
@@ -133,7 +139,7 @@ head(species.score)
 
   ## 6) Create polygons for default (factory) reference spectra
   ## hull values for grp Default
-grp.default<-mds.scores[mds.scores$grp.source=="Default",][chull(mds.scores[mds.scores$grp.source=="Default", 
+grp.default3<-mds.scores3[mds.scores3$grp.source=="Default",][chull(mds.scores3[mds.scores3$grp.source=="Default", 
                                              c("NMDS1", "NMDS2")]),]
  ## hull values for grp Customized
 grp.cust<-mds.scores[mds.scores$grp.source == "non-Default",][chull(mds.scores[mds.scores$grp.source == "non-Default", 
@@ -146,7 +152,9 @@ grp.mix<-mds.scores[mds.scores$grp.source == "mixed",][chull(mds.scores[mds.scor
 hull.data<-rbind(grp.default,grp.cust)
 hull.data
   
-  ## 7) Plot nMDS using ggplot
+########################################################################
+  ###################  Plot nMDS using ggplot  #####################
+
   ## hulling only default refs, alpha = transparency w/ 0 being transparent
 p1<-ggplot() +
   geom_polygon(data = grp.default, aes(x = NMDS1, y = NMDS2, group = grp.source), fill = NA, alpha = 0.5) +
@@ -190,17 +198,17 @@ mds.2020<-subset(mds.scores, grp.source == "2020")
 mds.2018<-subset(mds.scores, grp.source == "2018")
 
 p3<-ggplot() +
-  geom_polygon(data = grp.default, 
+  geom_polygon(data = grp.default3, 
                aes(x = NMDS1, y = NMDS2, group = grp.source), 
                fill = "gray", alpha =0.3, linetype = 2) +
-  geom_point(data = grp.default, aes(x=NMDS1, y=NMDS2), size =9) +
+  geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size =9) +
   #geom_point(data = mds.2020, aes(x=NMDS1, y=NMDS2), size = 6, color = "#0000CC") +
-  geom_point(data = mds.scores, aes(x=NMDS1, y=NMDS2), size = 6, color = "#009933") +
+  geom_point(data = mds.scores3, aes(x=NMDS1, y=NMDS2), size = 6, color = "#009933") +
   #geom_point(data = mds.2019, aes(x=NMDS1, y=NMDS2), size = 6, color = "#FF9900") +
   #geom_text(data = mds.2020, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  geom_text(data = mds.scores, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  geom_text(data = grp.default, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.01) +
+  geom_text(data = mds.scores3, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
+  geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.01) +
   #scale_color_viridis_d(option = "plasma") + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -217,21 +225,26 @@ p3
 p4<- p3 + facet_wrap(.~location, ncol = 3)
 p4
 
-  ## Subset and plot green valley data
+  ## Subset and plot green valley 
 mds.gval<-subset(mds.scores, location == "Green Valley")
+mds.twin<-subset(mds.scores, location == "North Twin East" | location == "North Twin West")
 p5<-ggplot() +
   geom_polygon(data = grp.default, aes(x = NMDS1, y = NMDS2, group = grp.source), fill = c("gray"), alpha = 0.5) +
-  #geom_point(data = grp.default, aes(x=NMDS1, y=NMDS2, color = grp.source), size =7) +
-  geom_point(data = mds.gval, aes(x=NMDS1, y=NMDS2, color = month), size = 7) +
-  #geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  #geom_text(data = grp.default, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.01) +
-  coord_equal() +
-  scale_color_viridis_d(option = "plasma", direction = -1, breaks = c("May", "June", "July", "August")) + 
-  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
-        panel.background = element_blank(),text = element_text(size = 14),
+  geom_point(data = grp.default, aes(x=NMDS1, y=NMDS2), color = "black", size =7) +
+  geom_point(data = mds.twin, aes(x=NMDS1, y=NMDS2, color = grp.fit), size = 7) +
+  geom_text(data = mds.twin, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
+  geom_text(data = grp.default, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.01) +
+  #scale_color_viridis_d(option = "plasma", direction = -1, breaks = c("May", "June", "July", "August")) + 
+  scale_color_viridis(option = "plasma", direction = -1) + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        text = element_text(size = 14),
         axis.line = element_line(colour = "black"),
-        axis.text=element_text(size=14), axis.title = element_text(size = 14),
-        legend.text = element_text(size = 14), legend.key=element_rect(fill='white'),
+        axis.text=element_text(size=14), 
+        axis.title = element_text(size = 14),
+        legend.text = element_text(size = 14), 
+        legend.key=element_rect(fill='white'),
         legend.title = element_blank())
 p5
 
