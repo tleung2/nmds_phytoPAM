@@ -71,8 +71,8 @@ hist.1
   
   ## 1) create group variable (assigns phytoplankton type to each row)
 grp.fit<-data.subset$fit_error
-grp.source<-data.subset$source
-sampleID<-data.subset$sample
+grp.source<-PAM_ref$source
+sampleID<-PAM_ref$sample
 location<-as.character(data.subset$site)
 class<-factor(data.subset$fit_class, levels = c("0","1","> 1"))
 #month<-data.all$month
@@ -82,7 +82,7 @@ class<-factor(data.subset$fit_class, levels = c("0","1","> 1"))
   ## vs lab calibrated fluorescence vs field samples?
 set.seed(123)
   ## mds of samples, default ref, cyano cultures
-mds.data<-metaMDS(data.norm[, c(1:5)], distance = "bray", k = 3, 
+mds.data<-metaMDS(PAM_ref[, c(2:6)], distance = "bray", k = 2, 
                   maxit = 999, trace =2)
   ## mds of samples and default ref
 mds.subset4<-metaMDS(data.subset[, c(1:5)], distance = "bray", k = 3,
@@ -110,7 +110,7 @@ rm(mds.subset)
   
   ## 1) Extract nMDS output into a dataframe 
   ## Use the score () to extraxt site scores and convert to data frame
-mds.scores3<-as.data.frame(scores(mds.subset3))
+mds.scores3<-as.data.frame(scores(mds.data))
 
   ## 2) create solumn of site names from row names of meta.scores
 mds.scores3$site<-rownames(mds.subset3)
@@ -143,7 +143,7 @@ head(species.score)
 grp.default3<-mds.scores3[mds.scores3$grp.source=="Default",][chull(mds.scores3[mds.scores3$grp.source=="Default", 
                                              c("NMDS1", "NMDS2")]),]
  ## hull values for grp Customized
-grp.cust<-mds.scores[mds.scores$grp.source == "non-Default",][chull(mds.scores[mds.scores$grp.source == "non-Default", 
+grp.cust<-mds.scores3[mds.scores3$grp.source == "non_Default",][chull(mds.scores3[mds.scores3$grp.source == "non_Default", 
                                              c("NMDS1", "NMDS2")]),]
  ## hull values for mixed cultures
 grp.mix<-mds.scores[mds.scores$grp.source == "mixed",][chull(mds.scores[mds.scores$grp.source == "mixed", 
@@ -154,10 +154,10 @@ hull.data<-rbind(grp.default,grp.cust)
 hull.data
   
   ## Renaming default references
-mds.scores3$sample[which(mds.scores3$sample == "'syleo")] <- "Synechococcus leopoliensis."
-mds.scores3$sample[which(mds.scores3$sample == "chlorella")] <- "Chorella vulgaris"
-mds.scores3$sample[which(mds.scores3$sample == "phaeo")] <- "Phaeodactylum tricornutum"
-mds.scores3$sample[which(mds.scores3$sample == "crypto")] <- "Cryptomonas ovata"
+mds.scores3$sample[which(mds.scores3$sample == "'syleo")] <- "'Blue' group"
+mds.scores3$sample[which(mds.scores3$sample == "chlorella")] <- "'Green' group"
+mds.scores3$sample[which(mds.scores3$sample == "phaeo")] <- "Brown' group"
+mds.scores3$sample[which(mds.scores3$sample == "crypto")] <- "'Red' group"
 
 ########################################################################
   ###################  Plot nMDS using ggplot  #####################
@@ -218,7 +218,7 @@ p3<-ggplot() +
                fill = "gray", alpha =0.3, linetype = 2) +
   geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size =9) +
   #geom_point(data = mds.2020, aes(x=NMDS1, y=NMDS2), size = 6, color = "#0000CC") +
-  geom_point(data = fit4, aes(x=NMDS1, y=NMDS2), color = "#73D055FF", size = 6) +
+  geom_point(data = grp.cust, aes(x=NMDS1, y=NMDS2, shape = sample), color = "#73D055FF", size = 6) +
   #geom_point(data = mds.scores3, aes(x=NMDS1, y=NMDS2, color = grp.fit), size = 6) +
   #geom_point(data = mds.2019, aes(x=NMDS1, y=NMDS2), size = 6, color = "#FF9900") +
   #geom_text(data = mds.2020, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
@@ -226,6 +226,7 @@ p3<-ggplot() +
   #geom_text(data = mds.scores3, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0.1, nudge_x = 0.15) +
   #scale_colour_viridis_c(option = "plasma") + 
+  scale_shape_manual(values = c(8:14)) + ## assign multiple shapes
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
