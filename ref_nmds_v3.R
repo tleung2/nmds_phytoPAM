@@ -15,12 +15,18 @@ data.all=read.csv("all_data_2018-2020_v3.csv",header=T)
 data.all$fit_error=as.numeric(data.all$fit_error)
 
 
+#######################################################################
+  ########################  TIDY DATASET   ##########################
+
+  ## dataset without non-default references
+data.all2 <- data.all %>%
+  filter(source !='non_Default')
+
 ########################################################################
   ########################  NORMALIZE DATA  ########################
   
   ## Normalize samples realtive to max (max F values scaled to 1)
-  ## First subset samples then scale from 0 to 1
-  ## ignore this line: data.samples<-subset(data.all, source %in% c('2018','2019'))
+  ## First subset samples then scale to max F 
 data.norm <- as.data.frame(t(apply(data.all[2:6], 1, 
                                    (function(x) round((x/(max(x)))*1000,3)))))
 
@@ -85,7 +91,7 @@ set.seed(123)
 mds.data<-metaMDS(data.norm[, c(1:5)], distance = "bray", k = 3, 
                   maxit = 999, trace =2)
   ## mds of samples and default ref
-mds.subset4<-metaMDS(data.subset[, c(1:5)], distance = "bray", k = 3,
+mds.subset3<-metaMDS(data.subset[, c(1:5)], distance = "bray", k = 3,
                     maxit = 999, trace =2)
   ## mds of deconvolution F (check F) of samples and default ref
 mds.subset2<-metaMDS(data.subset2[, c(1:5)], distance = "bray", k = 3,
@@ -99,7 +105,7 @@ mds.subset2
   ### mds2 = solution eached
 
   ## Saving nMDS output
-save(mds.subset2, file = "mds_subset2.rda")
+save(mds.subset3, file = "mds_subset3.rda")
 
   ## 3) Plot nMDS output using base R
 plot(mds.subset4)  ## Base R will automatically recognize ordination
@@ -116,10 +122,10 @@ mds.scores3<-as.data.frame(scores(mds.subset3))
 mds.scores3$site<-rownames(mds.subset3)
 
   ## 3) add details to mds.scores dataframe
-grp.fit<-round(grp.fit, digits = 0)  ## Round Fit error to 1 decimal place
+grp.fit<-round(data.subset$fit_error, digits = 0)  ## Round Fit error to 1 decimal place
 mds.scores3$grp.fit<-grp.fit
-mds.scores3$grp.source<-grp.source
-mds.scores3$sample<-sampleID
+mds.scores3$grp.source<-data.subset$source
+mds.scores3$sample<-data.subset$sample
 mds.scores3$location<-location
 mds.scores3$class<-class
 #mds.scores$week<-as.factor(week)
@@ -154,7 +160,7 @@ hull.data<-rbind(grp.default,grp.cust)
 hull.data
   
   ## Renaming default references
-mds.scores3$sample[which(mds.scores3$sample == "'syleo")] <- "Synechococcus leopoliensis."
+mds.scores3$sample[which(mds.scores3$sample == "syleo")] <- "'Synechococcus leopoliensis.'"
 mds.scores3$sample[which(mds.scores3$sample == "chlorella")] <- "Chorella vulgaris"
 mds.scores3$sample[which(mds.scores3$sample == "phaeo")] <- "Phaeodactylum tricornutum"
 mds.scores3$sample[which(mds.scores3$sample == "crypto")] <- "Cryptomonas ovata"
