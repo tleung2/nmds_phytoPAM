@@ -36,12 +36,11 @@ check.norm <- as.data.frame(t(apply(data.all[13:17], 1,
   ## Add references back to normalized data
 data.norm2<-bind_cols(data.norm,data.all[1])
 data.norm3<-bind_cols(data.norm2,data.all[8])
-data.norm4<-bind_cols(data.norm3,data.all[9])
-data.norm4<-bind_cols(data.norm3,data.all[c(10,13)])
+data.norm4<-bind_cols(data.norm3,data.all[c(9,10)])
 
 check.norm2<-bind_cols(check.norm,data.all[1])
 check.norm3<-bind_cols(check.norm2,data.all[8])
-check.norm4<-bind_cols(check.norm3,data.all[9])
+check.norm4<-bind_cols(check.norm3,data.all[9,10])
 
 
   ## Remove samples with Fit error = 32000 (user error)
@@ -101,9 +100,7 @@ mds.data
 mds.subset
 mds.subset2
 
-  ### note:mds1=no convergence, n=454
-  ### mds2 = solution eached
-
+  ### note:run more than once if first attempt is no convergence
   ## Saving nMDS output
 save(mds.subset3, file = "mds_subset3.rda")
 
@@ -116,7 +113,7 @@ rm(mds.subset)
   
   ## 1) Extract nMDS output into a dataframe 
   ## Use the score () to extraxt site scores and convert to data frame
-mds.scores3<-as.data.frame(scores(mds.data))
+mds.scores3<-as.data.frame(scores(mds.subset3))
 
   ## 2) create solumn of site names from row names of meta.scores
 mds.scores3$site<-rownames(mds.subset3)
@@ -126,8 +123,8 @@ grp.fit<-round(data.subset$fit_error, digits = 0)  ## Round Fit error to 1 decim
 mds.scores3$grp.fit<-grp.fit
 mds.scores3$grp.source<-data.subset$source
 mds.scores3$sample<-data.subset$sample
-mds.scores3$location<-location
-mds.scores3$class<-class
+mds.scores3$location<-data.subset$site
+
 #mds.scores$week<-as.factor(week)
 #mds.scores$month<-month
   
@@ -160,17 +157,11 @@ hull.data<-rbind(grp.default,grp.cust)
 hull.data
   
   ## Renaming default references
-<<<<<<< HEAD
-mds.scores3$sample[which(mds.scores3$sample == "syleo")] <- "'Synechococcus leopoliensis.'"
-mds.scores3$sample[which(mds.scores3$sample == "chlorella")] <- "Chorella vulgaris"
-mds.scores3$sample[which(mds.scores3$sample == "phaeo")] <- "Phaeodactylum tricornutum"
-mds.scores3$sample[which(mds.scores3$sample == "crypto")] <- "Cryptomonas ovata"
-=======
-mds.scores3$sample[which(mds.scores3$sample == "'syleo")] <- "'Blue' group"
-mds.scores3$sample[which(mds.scores3$sample == "chlorella")] <- "'Green' group"
-mds.scores3$sample[which(mds.scores3$sample == "phaeo")] <- "Brown' group"
-mds.scores3$sample[which(mds.scores3$sample == "crypto")] <- "'Red' group"
->>>>>>> acd4524ec0a033485d23aaabcaec601e23c9bd02
+mds.scores3$sample[which(mds.scores3$sample == "syleo")] <- "'Blue' group"  #Synechococcus leopoliensis.
+mds.scores3$sample[which(mds.scores3$sample == "chlorella")] <- "'Green' group" #Chorella vulgaris"
+mds.scores3$sample[which(mds.scores3$sample == "phaeo")] <- "'Brown' group" #Phaeodactylum tricornutum"
+mds.scores3$sample[which(mds.scores3$sample == "crypto")] <- "'Red' group" #Cryptomonas ovata"
+
 
 ########################################################################
   ###################  Plot nMDS using ggplot  #####################
@@ -214,9 +205,11 @@ p2
 
  ## --------------- Plot references and samples  -------------------
  ## Subset 2018 data from the mds output
-mds.2019<-subset(mds.scores, grp.source == "2019")
-mds.2020<-subset(mds.scores, grp.source == "2020")
-mds.2018<-subset(mds.scores, grp.source == "2018")
+mds.2019<-subset(mds.scores3, grp.source == "2019")
+mds.2020<-subset(mds.scores3, grp.source == "2020")
+mds.2018<-subset(mds.scores3, grp.source == "2018")
+mds.sample<- mds.scores3 %>%
+  filter(grp.source !='Default')
 
   ## subset by fit error
 fit0<-subset(mds.scores3, grp.fit == "0")
@@ -230,14 +223,15 @@ p3<-ggplot() +
                aes(x = NMDS1, y = NMDS2, group = grp.source), 
                fill = "gray", alpha =0.3, linetype = 2) +
   geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size =9) +
-  #geom_point(data = mds.2020, aes(x=NMDS1, y=NMDS2), size = 6, color = "#0000CC") +
-  geom_point(data = grp.cust, aes(x=NMDS1, y=NMDS2, shape = sample), color = "#73D055FF", size = 6) +
-  #geom_point(data = mds.scores3, aes(x=NMDS1, y=NMDS2, color = grp.fit), size = 6) +
-  #geom_point(data = mds.2019, aes(x=NMDS1, y=NMDS2), size = 6, color = "#FF9900") +
-  #geom_text(data = mds.2020, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  #geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  #geom_text(data = mds.scores3, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0.1, nudge_x = 0.15) +
+  geom_point(data = mds.2020, aes(x=NMDS1, y=NMDS2), size = 6, color = "#9999FF") +
+  #geom_point(data = mds.sample, aes(x=NMDS1, y=NMDS2), color = "#73D055FF", size = 6) +
+  geom_point(data = mds.2018, aes(x=NMDS1, y=NMDS2), color = "#33CC99", size = 6) +
+  geom_point(data = mds.2019, aes(x=NMDS1, y=NMDS2), size = 6, color = "#FF9900") +
+  geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.07) +
+  geom_text(data = mds.2020, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
+  geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
+  geom_text(data = mds.2019, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
+  #geom_text(data = mds.sample, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0.1, nudge_x = 0.15) +
   #scale_colour_viridis_c(option = "plasma") + 
   scale_shape_manual(values = c(8:14)) + ## assign multiple shapes
   theme(panel.grid.major = element_blank(),
@@ -252,7 +246,7 @@ p3<-ggplot() +
         legend.position = "right",
         legend.title = element_blank())
 p3
-p4<- p3 + facet_wrap(.~class, ncol = 1)
+p4<- p3 + facet_wrap(.~location)
 p4
 
   ## Subset and plot green valley 
@@ -261,11 +255,11 @@ mds.twin<-subset(mds.scores3, location == "North Twin East" | location == "North
 p5<-ggplot() +
   geom_polygon(data = grp.default3, aes(x = NMDS1, y = NMDS2, group = grp.source), fill = c("gray"), alpha = 0.5) +
   geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), color = "black", size =7) +
-  geom_point(data = mds.gval, aes(x=NMDS1, y=NMDS2, color = grp.fit), size = 7) +
-  geom_text(data = mds.gval, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.01) +
-  #scale_color_viridis_d(option = "plasma", direction = -1, breaks = c("May", "June", "July", "August")) + 
-  scale_color_viridis(option = "plasma", direction = -1) + 
+  geom_point(data = mds.twin, aes(x=NMDS1, y=NMDS2, color = grp.source), size = 7) +
+  geom_text(data = mds.twin, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
+  geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.06) +
+  scale_color_viridis_d(option = "plasma", direction = -1, breaks = c("2018", "2019", "2020")) + 
+  #scale_color_viridis(option = "plasma", direction = -1) + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
