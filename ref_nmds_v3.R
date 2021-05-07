@@ -27,16 +27,16 @@ data.all2 <- data.all %>%
   
   ## Normalize samples realtive to max (max F values scaled to 1)
   ## First subset samples then scale to max F 
-data.norm <- as.data.frame(t(apply(data.all[2:6], 1, 
+data.norm <- as.data.frame(t(apply(data.all2[2:6], 1, 
                                    (function(x) round((x/(max(x)))*1000,3)))))
 
   ## Normalize checked columns
 check.norm <- as.data.frame(t(apply(data.all[13:17], 1, 
                                    function(x) round((x/(max(x)))*1000,2))))
   ## Add references back to normalized data
-data.norm2<-bind_cols(data.norm,data.all[1])
-data.norm3<-bind_cols(data.norm2,data.all[8])
-data.norm4<-bind_cols(data.norm3,data.all[c(9,10)])
+data.norm2<-bind_cols(data.norm,data.all2[1])
+data.norm3<-bind_cols(data.norm2,data.all2[8])
+data.norm4<-bind_cols(data.norm3,data.all2[c(9,10,19)])
 
 check.norm2<-bind_cols(check.norm,data.all[1])
 check.norm3<-bind_cols(check.norm2,data.all[8])
@@ -74,17 +74,10 @@ hist.1
 ########################################################################
   #########################  RUN nMDS  ############################
   
-  ## 1) create group variable (assigns phytoplankton type to each row)
-grp.fit<-data.subset$fit_error
-grp.source<-PAM_ref$source
-sampleID<-PAM_ref$sample
-location<-as.character(data.subset$site)
-class<-factor(data.subset$fit_class, levels = c("0","1","> 1"))
-#month<-data.all$month
-
-  ## 2) start mds: 
+  ## 1) start mds: 
   ## Is there a difference in fluorescence of default fluorescence signatures
   ## vs lab calibrated fluorescence vs field samples?
+  ### note:run more than once if first attempt is no convergence
 set.seed(123)
   ## mds of samples, default ref, cyano cultures
 mds.data<-metaMDS(PAM_ref[, c(2:6)], distance = "bray", k = 2, 
@@ -100,8 +93,7 @@ mds.data
 mds.subset
 mds.subset2
 
-  ### note:run more than once if first attempt is no convergence
-  ## Saving nMDS output
+  ## 2) Saving nMDS output
 save(mds.subset3, file = "mds_subset3.rda")
 
   ## 3) Plot nMDS output using base R
@@ -120,10 +112,11 @@ mds.scores3$site<-rownames(mds.subset3)
 
   ## 3) add details to mds.scores dataframe
 grp.fit<-round(data.subset$fit_error, digits = 0)  ## Round Fit error to 1 decimal place
-mds.scores3$grp.fit<-grp.fit
+mds.scores3$grp.fit<-data.subset$fit_error
 mds.scores3$grp.source<-data.subset$source
 mds.scores3$sample<-data.subset$sample
 mds.scores3$location<-data.subset$site
+mds.scores3$tot_chla<-data.subset$tot_chla
 
 #mds.scores$week<-as.factor(week)
 #mds.scores$month<-month
@@ -142,6 +135,11 @@ species.score$species<-rownames(species.score)
 head(species.score)
 
   ## 6) Create polygons for default (factory) reference spectra
+  ## Renaming default references
+mds.scores3$sample[which(mds.scores3$sample == "syleo")] <- "'Blue' group"  #Synechococcus leopoliensis.
+mds.scores3$sample[which(mds.scores3$sample == "chlorella")] <- "'Green' group" #Chorella vulgaris"
+mds.scores3$sample[which(mds.scores3$sample == "phaeo")] <- "'Brown' group" #Phaeodactylum tricornutum"
+mds.scores3$sample[which(mds.scores3$sample == "crypto")] <- "'Red' group" #Cryptomonas ovata"
   ## hull values for grp Default
 grp.default3<-mds.scores3[mds.scores3$grp.source=="Default",][chull(mds.scores3[mds.scores3$grp.source=="Default", 
                                              c("NMDS1", "NMDS2")]),]
@@ -156,12 +154,7 @@ grp.mix<-mds.scores[mds.scores$grp.source == "mixed",][chull(mds.scores[mds.scor
 hull.data<-rbind(grp.default,grp.cust)
 hull.data
   
-  ## Renaming default references
-mds.scores3$sample[which(mds.scores3$sample == "syleo")] <- "'Blue' group"  #Synechococcus leopoliensis.
-mds.scores3$sample[which(mds.scores3$sample == "chlorella")] <- "'Green' group" #Chorella vulgaris"
-mds.scores3$sample[which(mds.scores3$sample == "phaeo")] <- "'Brown' group" #Phaeodactylum tricornutum"
-mds.scores3$sample[which(mds.scores3$sample == "crypto")] <- "'Red' group" #Cryptomonas ovata"
-
+  
 
 ########################################################################
   ###################  Plot nMDS using ggplot  #####################
@@ -223,16 +216,16 @@ p3<-ggplot() +
                aes(x = NMDS1, y = NMDS2, group = grp.source), 
                fill = "gray", alpha =0.3, linetype = 2) +
   geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size =9) +
-  geom_point(data = mds.2020, aes(x=NMDS1, y=NMDS2), size = 6, color = "#9999FF") +
-  #geom_point(data = mds.sample, aes(x=NMDS1, y=NMDS2), color = "#73D055FF", size = 6) +
-  geom_point(data = mds.2018, aes(x=NMDS1, y=NMDS2), color = "#33CC99", size = 6) +
-  geom_point(data = mds.2019, aes(x=NMDS1, y=NMDS2), size = 6, color = "#FF9900") +
+  #geom_point(data = mds.2020, aes(x=NMDS1, y=NMDS2), size = 6, color = "#9999FF") +
+  geom_point(data = mds.sample, aes(x=NMDS1, y=NMDS2, color = tot_chla), size = 6) +
+  #geom_point(data = mds.2018, aes(x=NMDS1, y=NMDS2), color = "#33CC99", size = 6) +
+  #geom_point(data = mds.2019, aes(x=NMDS1, y=NMDS2), size = 6, color = "#FF9900") +
   geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.07) +
-  geom_text(data = mds.2020, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  geom_text(data = mds.2019, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  #geom_text(data = mds.sample, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0.1, nudge_x = 0.15) +
-  #scale_colour_viridis_c(option = "plasma") + 
+  #geom_text(data = mds.2020, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
+  #geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
+  #geom_text(data = mds.2019, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
+  geom_text(data = mds.sample, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0.1, nudge_x = 0.01) +
+  scale_colour_viridis_c(option = "turbo") + 
   scale_shape_manual(values = c(8:14)) + ## assign multiple shapes
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
