@@ -1,4 +1,5 @@
 
+  ## LOAD PACKAGES
 library(vegan) 
 library(viridis)
 library(NbClust) #for finding optimal clusters
@@ -91,7 +92,7 @@ mds.subset2<-metaMDS(data.subset2[, c(1:5)], distance = "bray", k = 3,
 stressplot(mds.subset)
 mds.data
 mds.subset
-mds.subset2
+mds.subset3
 
   ## 2) Saving nMDS output
 save(mds.subset3, file = "mds_subset3.rda")
@@ -121,8 +122,8 @@ mds.scores3$tot_chla<-data.subset$tot_chla
 #mds.scores$week<-as.factor(week)
 #mds.scores$month<-month
   
- ##look at the data
-head(mds.scores)
+  ## Save mds scores dataframe
+save(mds.scores3, file = "mds_scores3.rda")
 
   ## 4) Extract Species scores into dataframe 
   ## Use score () to extract species score from mds output 
@@ -217,14 +218,14 @@ p3<-ggplot() +
                fill = "gray", alpha =0.3, linetype = 2) +
   geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size =9) +
   #geom_point(data = mds.2020, aes(x=NMDS1, y=NMDS2), size = 6, color = "#9999FF") +
-  geom_point(data = mds.sample, aes(x=NMDS1, y=NMDS2, color = tot_chla), size = 6) +
+  geom_point(data = fit4, aes(x=NMDS1, y=NMDS2, color = grp.fit), size = 6) +
   #geom_point(data = mds.2018, aes(x=NMDS1, y=NMDS2), color = "#33CC99", size = 6) +
   #geom_point(data = mds.2019, aes(x=NMDS1, y=NMDS2), size = 6, color = "#FF9900") +
   geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.07) +
   #geom_text(data = mds.2020, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = mds.2019, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  geom_text(data = mds.sample, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0.1, nudge_x = 0.01) +
+  geom_text(data = fit4, aes(x = NMDS1, y = NMDS2, label = sample), size = 3, vjust = 0.1, nudge_x = 0.01) +
   scale_colour_viridis_c(option = "turbo") + 
   scale_shape_manual(values = c(8:14)) + ## assign multiple shapes
   theme(panel.grid.major = element_blank(),
@@ -239,9 +240,10 @@ p3<-ggplot() +
         legend.position = "right",
         legend.title = element_blank())
 p3
-p4<- p3 + facet_wrap(.~location)
-p4
 
+  ## Turn on interactive graph
+library(plotly)
+ggplotly(p3)
   ## Subset and plot green valley 
 mds.gval<-subset(mds.scores3, location == "Green Valley")
 mds.twin<-subset(mds.scores3, location == "North Twin East" | location == "North Twin West")
@@ -249,7 +251,7 @@ p5<-ggplot() +
   geom_polygon(data = grp.default3, aes(x = NMDS1, y = NMDS2, group = grp.source), fill = c("gray"), alpha = 0.5) +
   geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), color = "black", size =7) +
   geom_point(data = mds.twin, aes(x=NMDS1, y=NMDS2, color = grp.source), size = 7) +
-  geom_text(data = mds.twin, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
+  geom_text(data = mds.twin, aes(x = NMDS1, y = NMDS2, label = sample), size = 5, vjust = 0, nudge_x = 0.01) +
   geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.06) +
   scale_color_viridis_d(option = "plasma", direction = -1, breaks = c("2018", "2019", "2020")) + 
   #scale_color_viridis(option = "plasma", direction = -1) + 
@@ -264,6 +266,8 @@ p5<-ggplot() +
         legend.key=element_rect(fill='white'),
         legend.title = element_blank())
 p5
+
+ggplotly(p5)
 
 ## Plot references and 2019 samples
 ## Subset 2018 data from the mds output
