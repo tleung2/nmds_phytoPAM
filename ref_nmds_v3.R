@@ -37,7 +37,7 @@ check.norm <- as.data.frame(t(apply(data.all[13:17], 1,
   ## Add references back to normalized data
 data.norm2<-bind_cols(data.norm,data.all2[1])
 data.norm3<-bind_cols(data.norm2,data.all2[8])
-data.norm4<-bind_cols(data.norm3,data.all2[c(9,10,19)])
+data.norm4<-bind_cols(data.norm3,data.all2[c(9,10,19:23)])
 
 check.norm2<-bind_cols(check.norm,data.all[1])
 check.norm3<-bind_cols(check.norm2,data.all[8])
@@ -118,6 +118,10 @@ mds.scores3$grp.source<-data.subset$source
 mds.scores3$sample<-data.subset$sample
 mds.scores3$location<-data.subset$site
 mds.scores3$tot_chla<-data.subset$tot_chla
+mds.scores3$cyano_chla<-data.subset$cyano_chla
+mds.scores3$green_chla<-data.subset$green_chla
+mds.scores3$brown_chla<-data.subset$brown_chla
+mds.scores3$pe_chla<-data.subset$pe_chla
 
 #mds.scores$week<-as.factor(week)
 #mds.scores$month<-month
@@ -204,6 +208,7 @@ mds.2020<-subset(mds.scores3, grp.source == "2020")
 mds.2018<-subset(mds.scores3, grp.source == "2018")
 mds.sample<- mds.scores3 %>%
   filter(grp.source !='Default')
+mds.zerogreen<-subset(mds.scores3, green_chla == "0")
 
   ## subset by fit error
 fit0<-subset(mds.scores3, grp.fit == "0")
@@ -216,16 +221,18 @@ p3<-ggplot() +
   geom_polygon(data = grp.default3, 
                aes(x = NMDS1, y = NMDS2, group = grp.source), 
                fill = "gray", alpha =0.3, linetype = 2) +
-  geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size =9) +
+  #geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size =9) +
+  geom_point(data = mds.zerogreen, aes(x=NMDS1, y=NMDS2), size =9) +
   #geom_point(data = mds.2020, aes(x=NMDS1, y=NMDS2), size = 6, color = "#9999FF") +
-  geom_point(data = fit4, aes(x=NMDS1, y=NMDS2, color = grp.fit), size = 6) +
+  #geom_point(data = fit4, aes(x=NMDS1, y=NMDS2, color = grp.fit), size = 6) +
   #geom_point(data = mds.2018, aes(x=NMDS1, y=NMDS2), color = "#33CC99", size = 6) +
   #geom_point(data = mds.2019, aes(x=NMDS1, y=NMDS2), size = 6, color = "#FF9900") +
-  geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.07) +
+  geom_text(data = mds.zerogreen, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 5, vjust = 0, nudge_x = 0.07) +
+  #geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.07) +
   #geom_text(data = mds.2020, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = mds.2019, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  geom_text(data = fit4, aes(x = NMDS1, y = NMDS2, label = sample), size = 3, vjust = 0.1, nudge_x = 0.01) +
+  #geom_text(data = fit4, aes(x = NMDS1, y = NMDS2, label = sample), size = 3, vjust = 0.1, nudge_x = 0.01) +
   scale_colour_viridis_c(option = "turbo") + 
   scale_shape_manual(values = c(8:14)) + ## assign multiple shapes
   theme(panel.grid.major = element_blank(),
