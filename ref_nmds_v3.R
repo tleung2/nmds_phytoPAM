@@ -32,16 +32,16 @@ data.norm <- as.data.frame(t(apply(data.all2[2:6], 1,
                                    (function(x) round((x/(max(x)))*1000,3)))))
 
   ## Normalize checked columns
-check.norm <- as.data.frame(t(apply(data.all[13:17], 1, 
+check.norm <- as.data.frame(t(apply(data.all2[14:18], 1, 
                                    function(x) round((x/(max(x)))*1000,2))))
   ## Add references back to normalized data
 data.norm2<-bind_cols(data.norm,data.all2[1])
 data.norm3<-bind_cols(data.norm2,data.all2[8])
-data.norm4<-bind_cols(data.norm3,data.all2[c(9,10,19:23)])
+data.norm4<-bind_cols(data.norm3,data.all2[c(9,10,19:24)])
 
 check.norm2<-bind_cols(check.norm,data.all[1])
 check.norm3<-bind_cols(check.norm2,data.all[8])
-check.norm4<-bind_cols(check.norm3,data.all[9,10])
+check.norm4<-bind_cols(check.norm3,data.all[9,10,19:24])
 
 
   ## Remove samples with Fit error = 32000 (user error)
@@ -71,6 +71,43 @@ hist.1<-ggplot(data.subset2, aes(x = fit_error, fill = source)) +
         legend.title = element_blank()) +
   facet_wrap(.~source, scales = "free_x")
 hist.1
+
+########################################################################
+  #########################   BOXPLOTS
+  ### Boxplot only lakes with consisitent sampling (not random testing) 
+  ### and ignoring null values
+
+  ### Convert z-off background fluorescence to numeric
+data.subset$zoff_F =as.numeric(data.subset$zoff_F)
+  ### filter our random lakes and lakes with 2 sample sites
+  ### Use pipe (%>%) and (!) to do this and then graph boxplot
+  ### this eliminates making another dataframe
+data.subset %>% filter(!site %in% c("Pleasant Creek", "Honey Creek Resort",
+                                    "Lacey-Keosauqua", "Lake Wapello",
+                                    "Marble Beach", "Red Haw", "Crandall's",
+                                    "Union Grove 10x Dilution", "Default",
+                                    "Denison", "Clear Lake",
+                                    "North Twin East")) %>%
+  ggplot(aes(x = site, y = zoff_F, fill = site)) +
+  geom_boxplot(color = "black", fill = "gray", alpha = 0.7) +
+  labs(y = expression(paste('Background Fluoresence (%)'))) +
+  #scale_fill_manual(values = c("#66CCCC", "#FFFF00", "#99CC00", "#FF9900"),
+                    #labels = c("'Blue' group", "'Brown' group",
+                               #"'Green' group","'Red' group")) +
+  #facet_wrap(.~order, scale = "free", ncol = 2) +
+  #scale_fill_viridis_d(option = "turbo") +
+  theme(panel.background = element_blank(),
+        axis.title.y = element_text(size = 14, color = "black"),
+        axis.title.x = element_text(size = 14, color = "black"),
+        axis.text.y = element_text(size = 14, color = "black"),
+        axis.text.x = element_text(size = 14, angle = 45, hjust = 1, 
+                                   color = "black"),
+        axis.line = element_line(color = "black"),
+        strip.text = element_text(size = 14),
+        legend.position = "none",
+        legend.key = element_blank(),
+        legend.text = element_text(size = 14),
+        legend.title = element_text(color = "white"))
 
 ########################################################################
   #########################  RUN nMDS  ############################
@@ -211,7 +248,7 @@ mds.sample<- mds.scores3 %>%
 mds.zerogreen<-subset(mds.scores3, green_chla == "0")
 
   ## subset by fit error
-fit0<-subset(mds.scores3, grp.fit == "0")
+fit0<-subset(mds.scores3, grp.fit == 0)
 fit1<-subset(mds.scores3, grp.fit == 1)
 fit2<- subset(mds.scores3, grp.fit == 2)
 fit3<-subset(mds.scores3, grp.fit == 3)
