@@ -82,31 +82,34 @@ data.subset$zoff_F =as.numeric(data.subset$zoff_F)
   ### filter our random lakes and lakes with 2 sample sites
   ### Use pipe (%>%) and (!) to do this and then graph boxplot
   ### this eliminates making another dataframe
+
 data.subset %>% filter(!site %in% c("Pleasant Creek", "Honey Creek Resort",
                                     "Lacey-Keosauqua", "Lake Wapello",
                                     "Marble Beach", "Red Haw", "Crandall's",
                                     "Union Grove 10x Dilution", "Default",
-                                    "Denison", "Clear Lake",
+                                    "Denison", "McIntosh Woods",
                                     "North Twin East")) %>%
+  #ggplot(aes(x = fct_rev(as_factor(site)), y = zoff_F, fill = site)) +
   ggplot(aes(x = site, y = zoff_F, fill = site)) +
   geom_boxplot(color = "black", fill = "gray", alpha = 0.7) +
-  labs(y = expression(paste('Background Fluoresence (%)'))) +
+  scale_x_discrete(limits = rev) +  ## reverse order of flipped x axis
+  labs(y = 'Background Fluoresence (%)') +
+  coord_flip() +
   #scale_fill_manual(values = c("#66CCCC", "#FFFF00", "#99CC00", "#FF9900"),
                     #labels = c("'Blue' group", "'Brown' group",
                                #"'Green' group","'Red' group")) +
   #facet_wrap(.~order, scale = "free", ncol = 2) +
   #scale_fill_viridis_d(option = "turbo") +
   theme(panel.background = element_blank(),
-        axis.title.y = element_text(size = 14, color = "black"),
-        axis.title.x = element_text(size = 14, color = "black"),
-        axis.text.y = element_text(size = 14, color = "black"),
-        axis.text.x = element_text(size = 14, angle = 45, hjust = 1, 
-                                   color = "black"),
+        axis.title.y = element_text(size = 12, color = "black"),
+        axis.title.x = element_text(size = 12, color = "black"),
+        axis.text.y = element_text(size = 12, color = "black"),
+        axis.text.x = element_text(size = 14, color = "black"),
         axis.line = element_line(color = "black"),
-        strip.text = element_text(size = 14),
+        strip.text = element_text(size = 12),
         legend.position = "none",
         legend.key = element_blank(),
-        legend.text = element_text(size = 14),
+        legend.text = element_text(size = 12),
         legend.title = element_text(color = "white"))
 
 ########################################################################
