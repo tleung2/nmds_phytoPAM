@@ -211,7 +211,7 @@ mds.scores$sample[which(mds.scores$sample == "phaeo")] <- "'Brown' group" #Phaeo
 mds.scores$sample[which(mds.scores$sample == "crypto")] <- "'Red' group" #Cryptomonas ovata"
 
   ## Save mds scores dataframe
-save(mds.scores, file = "mds_scores.rda")
+save(mds.scores3, file = "mds_scores3.rda")
 
   ## Do same for ref and cyano mds output
   ## 1) Extract nMDS output into a dataframe 
@@ -245,8 +245,8 @@ grp.cust<-subset(ref.scores, source == "non-Default")
 p1<-ggplot() +
   # this adds default refs scores
   geom_polygon(data = grp.ref, aes(x = NMDS1, y = NMDS2, group = source), 
-               fill = "gray", alpha = 0.2) +
-  geom_point(data = grp.ref, aes(x=NMDS1, y=NMDS2), size = 3) +
+               fill = NA, color = "gray", size = 1) +
+  geom_point(data = grp.ref, aes(x=NMDS1, y=NMDS2), size = 2) +
   geom_text(data = grp.ref, aes(x = NMDS1, y = NMDS2, label = sample), 
             size = 3.5, nudge_x = 0.2) +
   # this adds cyanos scores
@@ -258,14 +258,14 @@ p1<-ggplot() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
-        text = element_text(size = 11),
+        text = element_text(size = 10),
         axis.line = element_line(colour = "black"),
-        axis.text=element_text(size=11), 
-        axis.title = element_text(size = 11),
-        legend.text = element_text(size = 11), 
+        axis.text=element_text(size=10), 
+        axis.title = element_text(size = 10),
+        legend.text = element_text(size = 10), 
         legend.key=element_rect(fill='white'),
         legend.title = element_blank(),
-        legend.position = "right")
+        legend.position = "na")
 p1
 
  ## --------------  Plot references and samples  -------------------
@@ -289,8 +289,8 @@ p3<-ggplot() +
   geom_polygon(data = grp.default3, 
                aes(x = NMDS1, y = NMDS2, group = source), 
                fill = NA, color = "gray", size = 1) +
-  geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size =3) +
-  geom_point(data = mds.sample, aes(x=NMDS1, y=NMDS2, color = class), size =3) +
+  geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size =2) +
+  geom_point(data = mds.sample, aes(x=NMDS1, y=NMDS2, color = class), size =2) +
   #geom_point(data = mds.2020, aes(x=NMDS1, y=NMDS2), size = 6, color = "#9999FF") +
   #geom_point(data = fit4, aes(x=NMDS1, y=NMDS2, color = grp.fit), size = 6) +
   #geom_point(data = mds.2018, aes(x=NMDS1, y=NMDS2), color = "#33CC99", size = 6) +
@@ -301,17 +301,19 @@ p3<-ggplot() +
   #geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = mds.2019, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = fit4, aes(x = NMDS1, y = NMDS2, label = sample), size = 3, vjust = 0.1, nudge_x = 0.01) +
-  scale_colour_viridis_d(option = "turbo") + 
+  #scale_colour_viridis_d(option = "viridis") + 
+  scale_color_manual(values = c("#de4968", "#3b0f70"),
+                     label = c("> 1", "0")) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
-        text = element_text(size = 11),
+        text = element_text(size = 10),
         axis.line = element_line(colour = "black"),
-        axis.text=element_text(size=11), 
-        axis.title = element_text(size = 11),
-        legend.text = element_text(size = 11), 
+        axis.text=element_text(size=10), 
+        axis.title = element_text(size = 10),
+        legend.text = element_text(size = 10), 
         legend.key=element_rect(fill='white'),
-        legend.position = "right",
+        legend.position = c(0.9,0.9),
         legend.title = element_blank())
 p3
 
