@@ -29,7 +29,7 @@ data.all2 <- data.all %>%
   ## Normalize samples realtive to max (max F values scaled to 1)
   ## First subset samples then scale to max F 
 data.norm <- as.data.frame(t(apply(data.all2[2:6], 1, 
-                                   (function(x) round((x/(max(x)))*1000,3)))))
+                                   (function(x) round((x/(max(x))),3)))))
 
   ## Normalize checked columns
 check.norm <- as.data.frame(t(apply(data.all2[14:18], 1, 
@@ -37,7 +37,7 @@ check.norm <- as.data.frame(t(apply(data.all2[14:18], 1,
   ## Add references back to normalized data
 data.norm2<-bind_cols(data.norm,data.all2[1])
 data.norm3<-bind_cols(data.norm2,data.all2[8])
-data.norm4<-bind_cols(data.norm3,data.all2[c(9,10,19:24)])
+data.norm4<-bind_cols(data.norm3,data.all2[c(9,10,13,19:24)])
 
 check.norm2<-bind_cols(check.norm,data.all[1])
 check.norm3<-bind_cols(check.norm2,data.all[8])
@@ -55,7 +55,7 @@ check.norm4 <- check.norm4 %>%
 data.subset<-subset(data.norm4, source == "2019" | source == "2020" | source == "Default" | source == "2018")
 data.subset2<-subset(check.norm4, source == "2019" | source == "2020" | source == "2018" | source == "Default")
 
-  ## Remove 
+  
 #######################################################################
   ##########################  HISTOGRAMS  #########################
 
@@ -122,12 +122,11 @@ data.subset %>% filter(!site %in% c("Pleasant Creek", "Honey Creek Resort",
 set.seed(123)
   ## mds of default ref and cyano cultures
   ## Import PAM-ref
-PAM_ref2 <- as.data.frame(t(apply(PAM_ref[2:6], 1, 
-                                   (function(x) round((x/(max(x))),4)))))
-mds.ref2<-metaMDS(PAM_ref2[, c(1:5)], distance = "bray", k = 2, 
+
+mds.ref<-metaMDS(PAM_ref[, c(2:6)], distance = "bray", k = 2, 
                   maxit = 999, trace =2)
   ## mds of samples and default ref
-mds.subset3<-metaMDS(data.subset[, c(1:5)], distance = "bray", k = 3,
+mds.subset3<-metaMDS(data.subset[, c(1:5)], distance = "bray", k = 2,
                     maxit = 999, trace =2)
   ## mds of deconvolution F (check F) of samples and default ref
 mds.subset2<-metaMDS(data.subset2[, c(1:5)], distance = "bray", k = 3,
@@ -138,11 +137,8 @@ mds.subset
 mds.subset3
 
   ## 2) Saving nMDS output
-<<<<<<< HEAD
-save(mds.data, file = "mds_ref.rda")
-=======
-save(mds.ref2, file = "mds_ref2.rda")
->>>>>>> d3be4564a4aabc53c67522b9a9d3cc4d9f245c77
+save(mds.subset3b, file = "mds_subset3b.rda")
+save(mds.ref, file = "mds_ref.rda")
 
   ## 3) Plot nMDS output using base R
 plot(mds.subset4)  ## Base R will automatically recognize ordination
@@ -162,8 +158,8 @@ mds.scores$site<-rownames(mds.scores)
 
   ## 3) add details to mds.scores dataframe
 grp.fit<-round(data.subset$fit_error, digits = 0)  ## Round Fit error to 1 decimal place
-mds.scores3$grp.fit<-data.subset$fit_error
-mds.scores3$grp.source<-data.subset$source
+mds.scores3$fit<-data.subset$fit_error
+mds.scores3$source<-data.subset$source
 mds.scores3$sample<-data.subset$sample
 mds.scores3$location<-data.subset$site
 mds.scores3$tot_chla<-data.subset$tot_chla
@@ -171,6 +167,7 @@ mds.scores3$cyano_chla<-data.subset$cyano_chla
 mds.scores3$green_chla<-data.subset$green_chla
 mds.scores3$brown_chla<-data.subset$brown_chla
 mds.scores3$pe_chla<-data.subset$pe_chla
+mds.scores3$class<-data.all2$fit_class
 
   
   ## 4) Extract Species scores into dataframe 
@@ -190,7 +187,7 @@ mds.scores3$sample[which(mds.scores3$sample == "chlorella")] <- "'Green' group" 
 mds.scores3$sample[which(mds.scores3$sample == "phaeo")] <- "'Brown' group" #Phaeodactylum tricornutum"
 mds.scores3$sample[which(mds.scores3$sample == "crypto")] <- "'Red' group" #Cryptomonas ovata"
   ## hull values for grp Default
-grp.default3<-mds.scores3[mds.scores3$grp.source=="Default",][chull(mds.scores3[mds.scores3$grp.source=="Default", 
+grp.default3<-mds.scores3[mds.scores3$source=="Default",][chull(mds.scores3[mds.scores3$source=="Default", 
                                              c("NMDS1", "NMDS2")]),]
  ## hull values for grp Customized
 grp.cust<-mds.scores3[mds.scores3$grp.source == "non_Default",][chull(mds.scores3[mds.scores3$grp.source == "non_Default", 
@@ -202,8 +199,6 @@ grp.mix<-mds.scores[mds.scores$grp.source == "mixed",][chull(mds.scores[mds.scor
  ## combine grp default and grp cust
 hull.data<-rbind(grp.default,grp.cust)
 hull.data
-  
-<<<<<<< HEAD
   
   ## Do same for ref nmds
   ## Add PAM-ref details to mds.scores nmds output
@@ -218,12 +213,11 @@ mds.scores$sample[which(mds.scores$sample == "crypto")] <- "'Red' group" #Crypto
   ## Save mds scores dataframe
 save(mds.scores, file = "mds_scores.rda")
 
-=======
   ## Do same for ref and cyano mds output
   ## 1) Extract nMDS output into a dataframe 
-ref.scores<-as.data.frame(scores(mds.ref2))
+ref.scores<-as.data.frame(scores(mds.ref))
   ## 2) create solumn of site names from row names of meta.scores
-ref.scores$site<-rownames(mds.ref2)
+ref.scores$site<-rownames(mds.ref)
   ## 3) add details to mds.scores dataframe
 ref.scores$source<-PAM_ref$source
 ref.scores$sample<-PAM_ref$sample
@@ -235,83 +229,52 @@ ref.scores$sample[which(ref.scores$sample == "crypto")] <- "'Red' group" #Crypto
 
   ## Save ref mds scores dataframe
 save(ref.scores, file = "ref_scores2.rda")
->>>>>>> d3be4564a4aabc53c67522b9a9d3cc4d9f245c77
+
 
 ########################################################################
   ###################  Plot nMDS using ggplot  #####################
 
   ## -------------- Plot nMDS of references and cyanos  -----------------
   ## hulling only default refs, alpha = transparency w/ 0 being transparent
-<<<<<<< HEAD
-  ## Use same grp.default for references
+  ## Use grp.ref for references 
   ## subset for cyanos as grp.cust (group customized)
-
-grp.cust<-subset(mds.scores, source == "non_Default")
+grp.ref<-ref.scores[ref.scores$source=="Default",][chull(ref.scores[ref.scores$source=="Default",
+                                                                    c("NMDS1", "NMDS2")]),]
+grp.cust<-subset(ref.scores, source == "non-Default")
+  ## plot nmds with ggplot
 p1<-ggplot() +
   # this adds default refs scores
-  geom_polygon(data = grp.default3, aes(x = NMDS1, y = NMDS2, group = grp.source), 
-               fill = NA, alpha = 0.5) +
-  geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size = 5) +
-  geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), 
-            size = 7, nudge_x = 0.1) +
+  geom_polygon(data = grp.ref, aes(x = NMDS1, y = NMDS2, group = source), 
+               fill = "gray", alpha = 0.2) +
+  geom_point(data = grp.ref, aes(x=NMDS1, y=NMDS2), size = 3) +
+  geom_text(data = grp.ref, aes(x = NMDS1, y = NMDS2, label = sample), 
+            size = 3.5, nudge_x = 0.2) +
   # this adds cyanos scores
   geom_point(data = grp.cust, aes(x=NMDS1, y=NMDS2, shape = sample), 
-             size = 5) +
-  geom_text(data = grp.cust, aes(x = NMDS1, y = NMDS2, label = sample), 
-            size = 7, nudge_x = 0.1) +
-  scale_color_viridis() +
-=======
-  ## default refs = grp.ref and cyanos = cyano
-grp.ref<-ref.scores[ref.scores$source=="Default",][chull(ref.scores[ref.scores$source=="Default", 
-                                                                                c("NMDS1", "NMDS2")]),]
-cyano<-subset(ref.scores, source == "non_Default")
-p1<-ggplot() +
-   # plot ref scores
-  geom_polygon(data = grp.ref, aes(x = NMDS1, y = NMDS2), fill = "gray", alpha = 0.5) +
-  geom_point(data = grp.ref, aes(x=NMDS1, y=NMDS2), size = 5) +
-  geom_text(data = grp.ref, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, nudge_x = 0.1) +
-   # plot cyano scores
-  geom_point(data = cyano, aes(x=NMDS1, y=NMDS2), size = 5) +
-  geom_text(data = cyano, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, nudge_x = 0.1) +
-  scale_color_viridis_d() +
->>>>>>> d3be4564a4aabc53c67522b9a9d3cc4d9f245c77
+             size = 3) +
+  #geom_text(data = grp.cust, aes(x = NMDS1, y = NMDS2, label = sample), 
+            #size = 3.5, nudge_x = 0.2) +
+  scale_shape_manual(values = c(0:9)) + ## assign multiple shapes
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
-        text = element_text(size = 18),
+        text = element_text(size = 11),
         axis.line = element_line(colour = "black"),
-        axis.text=element_text(size=18), 
-        axis.title = element_text(size = 18),
-        legend.text = element_text(size = 18), 
+        axis.text=element_text(size=11), 
+        axis.title = element_text(size = 11),
+        legend.text = element_text(size = 11), 
         legend.key=element_rect(fill='white'),
-        legend.title = element_blank())
+        legend.title = element_blank(),
+        legend.position = "right")
 p1
 
-  ## subset of non-default 
-cust.scores<-subset(mds.scores, grp.source == "non-Default")
-  ## Begin plot using ggplot--hulling only non-default refs, but there is error in the chull
-  ## chull for non-default is only hulling 7 species and not all of them.
-p2<-ggplot() +
-  geom_polygon(data = grp.cust, aes(x = NMDS1, y = NMDS2, group = grp.source,), fill = c("gray"), alpha = 0.5) +
-  geom_point(data = cust.scores, aes(x=NMDS1, y=NMDS2, color = grp.source), size = 3) +
-  geom_text(data = cust.scores, aes(x = NMDS1, y = NMDS2, label = sample), size = 5, vjust = 0, nudge_x = 0.1) +
-  coord_equal() +
-  scale_color_viridis_d() +
-  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
-        panel.background = element_blank(),text = element_text(size = 14),
-        axis.line = element_line(colour = "black"),
-        axis.text=element_text(size=14), axis.title = element_text(size = 14),
-        legend.text = element_text(size = 14), legend.key=element_rect(fill='white'),
-        legend.title = element_blank())
-p2
-
- ## --------------- Plot references and samples  -------------------
+ ## --------------  Plot references and samples  -------------------
  ## Subset 2018 data from the mds output
 mds.2019<-subset(mds.scores3, grp.source == "2019")
 mds.2020<-subset(mds.scores3, grp.source == "2020")
 mds.2018<-subset(mds.scores3, grp.source == "2018")
 mds.sample<- mds.scores3 %>%
-  filter(grp.source !='Default')
+  filter(source !='Default')
 mds.zerogreen<-subset(mds.scores3, green_chla == "0")
 mds.cyano<-subset()
 
@@ -324,30 +287,29 @@ fit4<-subset(mds.scores3, grp.fit > 3)
 
 p3<-ggplot() +
   geom_polygon(data = grp.default3, 
-               aes(x = NMDS1, y = NMDS2, group = grp.source), 
-               fill = "gray", alpha =0.3, linetype = 2) +
-  #geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size =9) +
-  geom_point(data = grp.cust, aes(x=NMDS1, y=NMDS2), size =9) +
+               aes(x = NMDS1, y = NMDS2, group = source), 
+               fill = NA, color = "gray", size = 1) +
+  geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size =3) +
+  geom_point(data = mds.sample, aes(x=NMDS1, y=NMDS2, color = class), size =3) +
   #geom_point(data = mds.2020, aes(x=NMDS1, y=NMDS2), size = 6, color = "#9999FF") +
   #geom_point(data = fit4, aes(x=NMDS1, y=NMDS2, color = grp.fit), size = 6) +
   #geom_point(data = mds.2018, aes(x=NMDS1, y=NMDS2), color = "#33CC99", size = 6) +
   #geom_point(data = mds.2019, aes(x=NMDS1, y=NMDS2), size = 6, color = "#FF9900") +
-  geom_text(data = grp.cust, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 5, vjust = 0, nudge_x = 0.07) +
-  #geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.07) +
+  #geom_text(data = grp.cust, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 5, vjust = 0, nudge_x = 0.07) +
+  geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 4, vjust = 0, nudge_x = 0.07) +
   #geom_text(data = mds.2020, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = mds.2019, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = fit4, aes(x = NMDS1, y = NMDS2, label = sample), size = 3, vjust = 0.1, nudge_x = 0.01) +
-  scale_colour_viridis_c(option = "turbo") + 
-  scale_shape_manual(values = c(8:14)) + ## assign multiple shapes
+  scale_colour_viridis_d(option = "turbo") + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
-        text = element_text(size = 14),
+        text = element_text(size = 11),
         axis.line = element_line(colour = "black"),
-        axis.text=element_text(size=14), 
-        axis.title = element_text(size = 14),
-        legend.text = element_text(size = 14), 
+        axis.text=element_text(size=11), 
+        axis.title = element_text(size = 11),
+        legend.text = element_text(size = 11), 
         legend.key=element_rect(fill='white'),
         legend.position = "right",
         legend.title = element_blank())
