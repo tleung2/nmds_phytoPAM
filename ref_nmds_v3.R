@@ -129,17 +129,17 @@ mds.subset3<-metaMDS(data.subset[, c(1:5)], distance = "bray", k = 3,
   ## mds of deconvolution F (check F) of samples and default ref
 mds.subset2<-metaMDS(data.subset2[, c(1:5)], distance = "bray", k = 3,
                     maxit = 999, trace =2)
-stressplot(mds.subset)
+stressplot(mds.data)
 mds.data
 mds.subset
 mds.subset3
 
   ## 2) Saving nMDS output
-save(mds.subset3, file = "mds_subset3.rda")
+save(mds.data, file = "mds_ref.rda")
 
   ## 3) Plot nMDS output using base R
 plot(mds.subset4)  ## Base R will automatically recognize ordination
-rm(mds.subset)
+plot(mds.data)
 
 ########################################################################
   #################  PREPARING OUTPUT FOR GGPLOT  ##################
@@ -147,9 +147,11 @@ rm(mds.subset)
   ## 1) Extract nMDS output into a dataframe 
   ## Use the score () to extraxt site scores and convert to data frame
 mds.scores3<-as.data.frame(scores(mds.subset3))
+mds.scores<-as.data.frame(scores(mds.data))
 
   ## 2) create solumn of site names from row names of meta.scores
 mds.scores3$site<-rownames(mds.subset3)
+mds.scores$site<-rownames(mds.scores)
 
   ## 3) add details to mds.scores dataframe
 grp.fit<-round(data.subset$fit_error, digits = 0)  ## Round Fit error to 1 decimal place
@@ -163,12 +165,7 @@ mds.scores3$green_chla<-data.subset$green_chla
 mds.scores3$brown_chla<-data.subset$brown_chla
 mds.scores3$pe_chla<-data.subset$pe_chla
 
-#mds.scores$week<-as.factor(week)
-#mds.scores$month<-month
   
-  ## Save mds scores dataframe
-save(mds.scores3, file = "mds_scores3.rda")
-
   ## 4) Extract Species scores into dataframe 
   ## Use score () to extract species score from mds output 
   ## and convert to data frame
@@ -200,17 +197,42 @@ hull.data<-rbind(grp.default,grp.cust)
 hull.data
   
   
+  ## Do same for ref nmds
+  ## Add PAM-ref details to mds.scores nmds output
+mds.scores$sample<-PAM_ref$sample
+mds.scores$source<-PAM_ref$source
+
+mds.scores$sample[which(mds.scores$sample == "syleo")] <- "'Blue' group"  #Synechococcus leopoliensis.
+mds.scores$sample[which(mds.scores$sample == "chlorella")] <- "'Green' group" #Chorella vulgaris"
+mds.scores$sample[which(mds.scores$sample == "phaeo")] <- "'Brown' group" #Phaeodactylum tricornutum"
+mds.scores$sample[which(mds.scores$sample == "crypto")] <- "'Red' group" #Cryptomonas ovata"
+
+  ## Save mds scores dataframe
+save(mds.scores, file = "mds_scores.rda")
+
 
 ########################################################################
   ###################  Plot nMDS using ggplot  #####################
 
-  ## -------------- Plot nMDS of references only  -----------------
+  ## -------------- Plot nMDS of references and cyanos  -----------------
   ## hulling only default refs, alpha = transparency w/ 0 being transparent
+  ## Use same grp.default for references
+  ## subset for cyanos as grp.cust (group customized)
+
+grp.cust<-subset(mds.scores, source == "non_Default")
 p1<-ggplot() +
-  geom_polygon(data = grp.default, aes(x = NMDS1, y = NMDS2, group = grp.source), fill = NA, alpha = 0.5) +
-  geom_point(data = grp.default, aes(x=NMDS1, y=NMDS2, color = grp.source), size = 5) +
-  geom_text(data = grp.default, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, nudge_x = 0.1) +
-  scale_color_viridis_d() +
+  # this adds default refs scores
+  geom_polygon(data = grp.default3, aes(x = NMDS1, y = NMDS2, group = grp.source), 
+               fill = NA, alpha = 0.5) +
+  geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size = 5) +
+  geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), 
+            size = 7, nudge_x = 0.1) +
+  # this adds cyanos scores
+  geom_point(data = grp.cust, aes(x=NMDS1, y=NMDS2, shape = sample), 
+             size = 5) +
+  geom_text(data = grp.cust, aes(x = NMDS1, y = NMDS2, label = sample), 
+            size = 7, nudge_x = 0.1) +
+  scale_color_viridis() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
@@ -249,6 +271,7 @@ mds.2018<-subset(mds.scores3, grp.source == "2018")
 mds.sample<- mds.scores3 %>%
   filter(grp.source !='Default')
 mds.zerogreen<-subset(mds.scores3, green_chla == "0")
+mds.cyano<-subset()
 
   ## subset by fit error
 fit0<-subset(mds.scores3, grp.fit == 0)
@@ -262,12 +285,12 @@ p3<-ggplot() +
                aes(x = NMDS1, y = NMDS2, group = grp.source), 
                fill = "gray", alpha =0.3, linetype = 2) +
   #geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size =9) +
-  geom_point(data = mds.zerogreen, aes(x=NMDS1, y=NMDS2), size =9) +
+  geom_point(data = grp.cust, aes(x=NMDS1, y=NMDS2), size =9) +
   #geom_point(data = mds.2020, aes(x=NMDS1, y=NMDS2), size = 6, color = "#9999FF") +
   #geom_point(data = fit4, aes(x=NMDS1, y=NMDS2, color = grp.fit), size = 6) +
   #geom_point(data = mds.2018, aes(x=NMDS1, y=NMDS2), color = "#33CC99", size = 6) +
   #geom_point(data = mds.2019, aes(x=NMDS1, y=NMDS2), size = 6, color = "#FF9900") +
-  geom_text(data = mds.zerogreen, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 5, vjust = 0, nudge_x = 0.07) +
+  geom_text(data = grp.cust, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 5, vjust = 0, nudge_x = 0.07) +
   #geom_text(data = grp.default3, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, vjust = 0, nudge_x = 0.07) +
   #geom_text(data = mds.2020, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
