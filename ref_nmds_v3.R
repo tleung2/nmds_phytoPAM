@@ -120,8 +120,11 @@ data.subset %>% filter(!site %in% c("Pleasant Creek", "Honey Creek Resort",
   ## vs lab calibrated fluorescence vs field samples?
   ### note:run more than once if first attempt is no convergence
 set.seed(123)
-  ## mds of samples, default ref, cyano cultures
-mds.data<-metaMDS(PAM_ref[, c(2:6)], distance = "bray", k = 2, 
+  ## mds of default ref and cyano cultures
+  ## Import PAM-ref
+PAM_ref2 <- as.data.frame(t(apply(PAM_ref[2:6], 1, 
+                                   (function(x) round((x/(max(x))),4)))))
+mds.ref2<-metaMDS(PAM_ref2[, c(1:5)], distance = "bray", k = 2, 
                   maxit = 999, trace =2)
   ## mds of samples and default ref
 mds.subset3<-metaMDS(data.subset[, c(1:5)], distance = "bray", k = 3,
@@ -135,7 +138,11 @@ mds.subset
 mds.subset3
 
   ## 2) Saving nMDS output
+<<<<<<< HEAD
 save(mds.data, file = "mds_ref.rda")
+=======
+save(mds.ref2, file = "mds_ref2.rda")
+>>>>>>> d3be4564a4aabc53c67522b9a9d3cc4d9f245c77
 
   ## 3) Plot nMDS output using base R
 plot(mds.subset4)  ## Base R will automatically recognize ordination
@@ -196,6 +203,7 @@ grp.mix<-mds.scores[mds.scores$grp.source == "mixed",][chull(mds.scores[mds.scor
 hull.data<-rbind(grp.default,grp.cust)
 hull.data
   
+<<<<<<< HEAD
   
   ## Do same for ref nmds
   ## Add PAM-ref details to mds.scores nmds output
@@ -210,12 +218,31 @@ mds.scores$sample[which(mds.scores$sample == "crypto")] <- "'Red' group" #Crypto
   ## Save mds scores dataframe
 save(mds.scores, file = "mds_scores.rda")
 
+=======
+  ## Do same for ref and cyano mds output
+  ## 1) Extract nMDS output into a dataframe 
+ref.scores<-as.data.frame(scores(mds.ref2))
+  ## 2) create solumn of site names from row names of meta.scores
+ref.scores$site<-rownames(mds.ref2)
+  ## 3) add details to mds.scores dataframe
+ref.scores$source<-PAM_ref$source
+ref.scores$sample<-PAM_ref$sample
+  ## 4) rename refs
+ref.scores$sample[which(ref.scores$sample == "syleo")] <- "'Blue' group"  #Synechococcus leopoliensis.
+ref.scores$sample[which(ref.scores$sample == "chlorella")] <- "'Green' group" #Chorella vulgaris"
+ref.scores$sample[which(ref.scores$sample == "phaeo")] <- "'Brown' group" #Phaeodactylum tricornutum"
+ref.scores$sample[which(ref.scores$sample == "crypto")] <- "'Red' group" #Cryptomonas ovata"
+
+  ## Save ref mds scores dataframe
+save(ref.scores, file = "ref_scores2.rda")
+>>>>>>> d3be4564a4aabc53c67522b9a9d3cc4d9f245c77
 
 ########################################################################
   ###################  Plot nMDS using ggplot  #####################
 
   ## -------------- Plot nMDS of references and cyanos  -----------------
   ## hulling only default refs, alpha = transparency w/ 0 being transparent
+<<<<<<< HEAD
   ## Use same grp.default for references
   ## subset for cyanos as grp.cust (group customized)
 
@@ -233,6 +260,21 @@ p1<-ggplot() +
   geom_text(data = grp.cust, aes(x = NMDS1, y = NMDS2, label = sample), 
             size = 7, nudge_x = 0.1) +
   scale_color_viridis() +
+=======
+  ## default refs = grp.ref and cyanos = cyano
+grp.ref<-ref.scores[ref.scores$source=="Default",][chull(ref.scores[ref.scores$source=="Default", 
+                                                                                c("NMDS1", "NMDS2")]),]
+cyano<-subset(ref.scores, source == "non_Default")
+p1<-ggplot() +
+   # plot ref scores
+  geom_polygon(data = grp.ref, aes(x = NMDS1, y = NMDS2), fill = "gray", alpha = 0.5) +
+  geom_point(data = grp.ref, aes(x=NMDS1, y=NMDS2), size = 5) +
+  geom_text(data = grp.ref, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, nudge_x = 0.1) +
+   # plot cyano scores
+  geom_point(data = cyano, aes(x=NMDS1, y=NMDS2), size = 5) +
+  geom_text(data = cyano, aes(x = NMDS1, y = NMDS2, label = sample), size = 7, nudge_x = 0.1) +
+  scale_color_viridis_d() +
+>>>>>>> d3be4564a4aabc53c67522b9a9d3cc4d9f245c77
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
