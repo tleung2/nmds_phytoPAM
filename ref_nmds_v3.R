@@ -6,6 +6,7 @@ library(NbClust) #for finding optimal clusters
 library(cluster) #for computing cluster silhouettes
 library(tidyverse)
 library(factoextra) #computing heirarchical cluster
+library(vegan3d) # For plotting 3D images, autoload vegan package
 
   ## Use 2018-2020 fluorescence data with references all in one dataset. 
   ## Then plot the ordination to see how the fluorescence samples  
@@ -302,7 +303,7 @@ p3<-ggplot() +
   #geom_text(data = mds.2019, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = fit4, aes(x = NMDS1, y = NMDS2, label = sample), size = 3, vjust = 0.1, nudge_x = 0.01) +
   #scale_colour_viridis_d(option = "viridis") + 
-  scale_color_manual(values = c("#de4968", "#3b0f70"),
+  scale_color_manual(values = c("#de4968", "#929596"), #de4968
                      label = c("> 1", "0")) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
