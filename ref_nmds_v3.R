@@ -7,6 +7,8 @@ library(cluster) #for computing cluster silhouettes
 library(tidyverse)
 library(factoextra) #computing heirarchical cluster
 library(vegan3d) # For plotting 3D images, autoload vegan package
+library(plotly)
+library(gg3D)
 
   ## Use 2018-2020 fluorescence data with references all in one dataset. 
   ## Then plot the ordination to see how the fluorescence samples  
@@ -123,8 +125,8 @@ data.subset %>% filter(!site %in% c("Pleasant Creek", "Honey Creek Resort",
 set.seed(123)
   ## mds of default ref and cyano cultures
   ## Import PAM-ref
-
-mds.ref<-metaMDS(PAM_ref[, c(2:6)], distance = "bray", k = 2, 
+  ## mds.ref2 => k = 3 whereas mds.ref => k = 2
+mds.ref2<-metaMDS(PAM_ref[, c(2:6)], distance = "bray", k = 3, 
                   maxit = 999, trace =2)
   ## mds of samples and default ref
 mds.subset3<-metaMDS(data.subset[, c(1:5)], distance = "bray", k = 2,
@@ -139,7 +141,7 @@ mds.subset3
 
   ## 2) Saving nMDS output
 save(mds.subset3b, file = "mds_subset3b.rda")
-save(mds.ref, file = "mds_ref.rda")
+save(mds.ref2, file = "mds_ref2.rda")
 
   ## 3) Plot nMDS output using base R
 plot(mds.subset4)  ## Base R will automatically recognize ordination
@@ -216,20 +218,20 @@ save(mds.scores3, file = "mds_scores3.rda")
 
   ## Do same for ref and cyano mds output
   ## 1) Extract nMDS output into a dataframe 
-ref.scores<-as.data.frame(scores(mds.ref))
+ref2.scores<-as.data.frame(scores(mds.ref2))
   ## 2) create solumn of site names from row names of meta.scores
-ref.scores$site<-rownames(mds.ref)
+ref2.scores$site<-rownames(mds.ref)
   ## 3) add details to mds.scores dataframe
-ref.scores$source<-PAM_ref$source
-ref.scores$sample<-PAM_ref$sample
+ref2.scores$source<-PAM_ref$source
+ref2.scores$sample<-PAM_ref$sample
   ## 4) rename refs
-ref.scores$sample[which(ref.scores$sample == "syleo")] <- "'Blue' group"  #Synechococcus leopoliensis.
-ref.scores$sample[which(ref.scores$sample == "chlorella")] <- "'Green' group" #Chorella vulgaris"
-ref.scores$sample[which(ref.scores$sample == "phaeo")] <- "'Brown' group" #Phaeodactylum tricornutum"
-ref.scores$sample[which(ref.scores$sample == "crypto")] <- "'Red' group" #Cryptomonas ovata"
+ref2.scores$sample[which(ref.scores$sample == "syleo")] <- "'Blue' group"  #Synechococcus leopoliensis.
+ref2.scores$sample[which(ref.scores$sample == "chlorella")] <- "'Green' group" #Chorella vulgaris"
+ref2.scores$sample[which(ref.scores$sample == "phaeo")] <- "'Brown' group" #Phaeodactylum tricornutum"
+ref2.scores$sample[which(ref.scores$sample == "crypto")] <- "'Red' group" #Cryptomonas ovata"
 
   ## Save ref mds scores dataframe
-save(ref.scores, file = "ref_scores2.rda")
+save(ref2.scores, file = "ref_scores3.rda")
 
 
 ########################################################################
@@ -269,6 +271,16 @@ p1<-ggplot() +
         legend.position = "na")
 p1
 
+  ## 3D plot for nmds (because k =3)
+
+plot_ly(ref2.scores, x=ref2.scores$NMDS1, 
+        y=ref2.scores$NMDS2, 
+        z=ref2.scores$NMDS3, 
+        type="scatter3d", mode="markers", color=source)
+ggplot(ref2.scores, aes(x=NMDS1, y=NMDS2, z=NMDS3, color=source)) + 
+  theme_void() +
+  axes_3D() +
+  stat_3D()
  ## --------------  Plot references and samples  -------------------
  ## Subset 2018 data from the mds output
 mds.2019<-subset(mds.scores3, grp.source == "2019")
