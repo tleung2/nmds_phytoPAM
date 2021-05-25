@@ -277,7 +277,8 @@ mds.2018<-subset(mds.scores3, grp.source == "2018")
 mds.sample<- mds.scores3 %>%
   filter(source !='Default')
 mds.zerogreen<-subset(mds.scores3, green_chla == "0")
-mds.cyano<-subset()
+mcintosh.2018<-subset(mds.2018, location == "McIntosh Woods")
+beeds.2018<-subset(mds.2018, location == "Beed's Lake")
 
   ## subset by fit error
 fit0<-subset(mds.scores3, grp.fit == 0)
@@ -288,12 +289,12 @@ fit4<-subset(mds.scores3, grp.fit > 3)
 
 p3<-ggplot() +
   geom_polygon(data = grp.default3, 
-               aes(x = NMDS1, y = NMDS2, group = source), 
+               aes(x = NMDS1, y = NMDS2, group = grp.source), 
                fill = NA, color = "gray", size = 1) +
   geom_point(data = grp.default3, aes(x=NMDS1, y=NMDS2), size =2) +
-  geom_point(data = mds.sample, aes(x=NMDS1, y=NMDS2, color = class), size =2) +
+  #geom_point(data = mds.sample, aes(x=NMDS1, y=NMDS2, color = class), size =2) +
   #geom_point(data = mds.2020, aes(x=NMDS1, y=NMDS2), size = 6, color = "#9999FF") +
-  #geom_point(data = fit4, aes(x=NMDS1, y=NMDS2, color = grp.fit), size = 6) +
+  geom_point(data = beeds.2018, aes(x=NMDS1, y=NMDS2, color = grp.fit), size = 6) +
   #geom_point(data = mds.2018, aes(x=NMDS1, y=NMDS2), color = "#33CC99", size = 6) +
   #geom_point(data = mds.2019, aes(x=NMDS1, y=NMDS2), size = 6, color = "#FF9900") +
   #geom_text(data = grp.cust, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 5, vjust = 0, nudge_x = 0.07) +
@@ -301,10 +302,11 @@ p3<-ggplot() +
   #geom_text(data = mds.2020, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = mds.2018, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
   #geom_text(data = mds.2019, aes(x = NMDS1, y = NMDS2, label = grp.fit), size = 7, vjust = 0, nudge_x = 0.01) +
-  #geom_text(data = fit4, aes(x = NMDS1, y = NMDS2, label = sample), size = 3, vjust = 0.1, nudge_x = 0.01) +
-  #scale_colour_viridis_d(option = "viridis") + 
-  scale_color_manual(values = c("#de4968", "#929596"), #de4968
-                     label = c("> 1", "0")) +
+  geom_text(data = beeds.2018, aes(x = NMDS1, y = NMDS2, label = sample), size = 3, vjust = 0.1, nudge_x = 0.05) +
+  scale_colour_viridis(option = "plasma") + 
+  #scale_color_manual(values = c("#de4968", "#929596"), #de4968
+                     #label = c("> 1", "0")) +
+  #facet_wrap(.~ location) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
@@ -489,6 +491,15 @@ test<- test.trans %>% mutate(order = rownames(test.trans))
 
 
 ############################################################################################
-  ###############   TESTING FOR SIG DIFF BTWN GROUPS   ################
+  #############   BARPLOT: CHLA COMMUNITY COMPOSITON   ##############
+  
+   ### select only chla data from PhytoPAM for year 2018
+chla.comm<-data.all2[c(5:151),c(1,9,10,11,20:23)]
 
+   ### Pivot longer to make column for taxa and chla values
+chla.comm2<-pivot_longer(chla.comm,5:8,names_to = "taxa", values_to = "chla")
 
+   ### Plot stacked barplot
+ggplot(chla.comm2, aes(fill = taxa, y = chla, x = week)) +
+  geom_bar(position = "stack", stat = "identity") +
+  facet_wrap(.~site)
