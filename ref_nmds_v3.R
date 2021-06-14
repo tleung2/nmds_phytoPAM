@@ -8,7 +8,7 @@ library(tidyverse)
 library(factoextra) #computing heirarchical cluster
 library(vegan3d) # For plotting 3D images, autoload vegan package
 library(plotly)
-library(gg3D)
+library(plot3D)
 
   ## Use 2018-2020 fluorescence data with references all in one dataset. 
   ## Then plot the ordination to see how the fluorescence samples  
@@ -501,6 +501,34 @@ test<- test.trans %>% mutate(order = rownames(test.trans))
 
 
 ############################################################################################
-  ###############   TESTING FOR SIG DIFF BTWN GROUPS   ################
+  ##################    MAKING 3D NMDS WITH GGPLOT    #################
 
+   ### This uses plot3D package so turn it on if you haven't
+   ### this package is follows the same coding as ggplot
+library(plot3D)  ## loads package for 3D plotting
+
+   ### Set the x,y,z coordinates
+   ### For this plot, will use the nmds scores since 
+   ### stress was lowest at 3 dimensions (because 2D did not converge)
+x <- mds.scores3$NMDS1
+y <- mds.scores3$NMDS2
+z <- mds.scores3$NMDS3
+
+   ### Basic scatter plot
+   ### clab is used to change legend title
+   ### The points are automatically colored according to variable Z
+colVar <- sapply(mds.scores3$fit,function(a){ifelse(a==0,'gray','red')})
+colVar <- factor(colVar,levels=c('gray','red'))
+   ### viewing angle: theta = azimuthal direction (rotate up/down?)
+   ### viewing angle: phi = co-latitude (horizontal??)
+   ### Use extreme for each and then 45 for both to test it out
+
+scatter3D(x=x,y=y,z=z, cex = 1.3,
+          phi = 45,theta = 45, ticktype = "detailed",
+          xlab = "NMDS1", ylab ="NMDS2", zlab = "NMDS3",
+          clab = c("Least", "Square Fit"),
+          colvar=as.integer(colVar),
+          colkey=list(at=c(0,1),side=4),
+          col=as.character(levels(colVar)),
+          pch=19)
 
