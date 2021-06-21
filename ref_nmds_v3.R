@@ -503,24 +503,109 @@ test<- test.trans %>% mutate(order = rownames(test.trans))
 
 
 ############################################################################################
-<<<<<<< HEAD
   ##################    MAKING 3D NMDS WITH GGPLOT    #################
 
    ### This uses plot3D package so turn it on if you haven't
    ### this package is follows the same coding as ggplot
-library(plot3D)  ## loads package for 3D plotting
+library(rgl)  ## loads package for 3D plotting
 
    ### Set the x,y,z coordinates
    ### For this plot, will use the nmds scores since 
    ### stress was lowest at 3 dimensions (because 2D did not converge)
-x <- mds.scores3$NMDS1
-y <- mds.scores3$NMDS2
-z <- mds.scores3$NMDS3
+
+   ### Create df of ref scores
+default.3d<-mds.scores3 %>%  
+  subset(source == "Default")
+   ### create df without references
+mds.3d<-mds.scores3 %>%  
+  subset(!source %in% "Default")
+   ### Assign dimensions to x,y,z
+x <- mds.3d$NMDS1
+y <- mds.3d$NMDS2
+z <- mds.3d$NMDS3
+   
 
    ### Basic scatter plot
+rgl.open()
+rgl.bg(color = "white") # Setup the background color
+rgl.points(x, y, z, size = 5,
+           color = get_colors(mds.3d$fit)) #color = "blue"
+
+   ### Color sample points by group
+   ### Create function
+#' Get colors for the different levels of 
+#' a factor variable
+#' 
+#' @param groups a factor variable containing the groups
+#'  of observations
+#' @param colors a vector containing the names of 
+#   the default colors to be used
+get_colors <- function(groups, group.col = palette()){
+  #groups <- as.factor(groups)
+  #ngrps <- length(levels(groups))
+  #if(ngrps > length(group.col)) 
+    #group.col <- rep(group.col, ngrps)
+  color <- group.col[as.numeric(groups)]
+  names(color) <- as.vector(groups)
+  return(color)
+}
+# Add x, y, and z Axes
+rgl.lines(c(0, 1), c(0, 0), c(0, 0), color = "black")
+rgl.lines(c(0, 0), c(0,0.5), c(0, 0), color = "red")
+rgl.lines(c(0, 0), c(0, 0), c(0,1), color = "green")
+
+  ### Add plane (use references)
+# define function to calculate axes limit
+lim <- function(x){c(-max(abs(x)), max(abs(x))) * 1}
+# xlab, ylab, zlab: axis labels
+# show.plane : add axis planes
+# show.bbox : add the bounding box decoration
+# bbox.col: the bounding box colors. The first color is the
+# the background color; the second color is the color of tick marks
+rgl_add_axes <- function(x, y, z, axis.col = "grey",
+                         xlab = "", ylab="", zlab="", show.plane = TRUE, 
+                         show.bbox = FALSE, bbox.col = c("#333377","black"))
+{ 
+  
+  lim <- function(x){c(-max(abs(x)), max(abs(x))) * 1}
+  # Add axes
+  xlim <- lim(x); ylim <- lim(y); zlim <- lim(z)
+  rgl.lines(xlim, c(0, 0), c(0, 0), color = axis.col)
+  rgl.lines(c(0, 0), ylim, c(0, 0), color = axis.col)
+  rgl.lines(c(0, 0), c(0, 0), zlim, color = axis.col)
+  
+  # Add a point at the end of each axes to specify the direction
+  axes <- rbind(c(xlim[2], 0, 0), c(0, ylim[2], 0), 
+                c(0, 0, zlim[2]))
+  rgl.points(axes, color = axis.col, size = 3)
+  
+  # Add axis labels
+  rgl.texts(axes, text = c(xlab, ylab, zlab), color = axis.col,
+            adj = c(0.5, -0.8), size = 2)
+  
+  # Add plane
+  if(show.plane) 
+    xlim <- xlim/1.1; zlim <- zlim /1.1
+  rgl.quads( x = c(-0.3526627, 0.3076674,0.4029682,0.1305049), 
+             y = c(-0.05494934, -0.1255089, 0.03109923, 0.15533561),
+             z = c(0.02211692, -0.01647502, 0.03821252, 0.0314686))
+  
+  # Add bounding box decoration
+  if(show.bbox){
+    rgl.bbox(color=c(bbox.col[1],bbox.col[2]), alpha = 0.5, 
+             emission=bbox.col[1], specular=bbox.col[1], shininess=5, 
+             xlen = 3, ylen = 3, zlen = 3) 
+  }
+}
+
+rgl_add_axes(x, y, z)
+
+
+
+
    ### clab is used to change legend title
    ### The points are automatically colored according to variable Z
-colVar <- sapply(mds.scores3$fit,function(a){ifelse(a==0,'gray','red')})
+colVar <- sapply(mds.3d$fit,function(a){ifelse(a==0,'gray','red')})
 colVar <- factor(colVar,levels=c('gray','red'))
    ### viewing angle: theta = azimuthal direction (rotate up/down?)
    ### viewing angle: phi = co-latitude (horizontal??)
@@ -534,7 +619,12 @@ scatter3D(x=x,y=y,z=z, cex = 1.3,
           colkey=list(at=c(0,1),side=4),
           col=as.character(levels(colVar)),
           pch=19)
-=======
+
+   ### Add ref scores to 3D plot
+   ### Cyano ref
+scatter3D(x = -0.3526627, y = -0.05494934, z = 0.02211692, add = TRUE, colkey = FALSE, 
+          pch = 18, cex = 3, col = "black")
+
   #############   BARPLOT: CHLA COMMUNITY COMPOSITON   ##############
   
    ### select only chla data from PhytoPAM for year 2018
@@ -542,7 +632,7 @@ chla.comm<-data.all2[c(5:151),c(1,9,10,11,20:23)]
 
    ### Pivot longer to make column for taxa and chla values
 chla.comm2<-pivot_longer(chla.comm,5:8,names_to = "taxa", values_to = "chla")
->>>>>>> d027d0fdfe5c5f70cbe946b9b1aecce39b39bebe
+
 
    ### Plot stacked barplot
 ggplot(chla.comm2, aes(fill = taxa, y = chla, x = week)) +
